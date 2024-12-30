@@ -15,12 +15,14 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
-import kotlin.concurrent.schedule
+import kotlin.concurrent.scheduleAtFixedRate
 
 class FactOfTheDay(private val jda: JDA) : ListenerAdapter() {
     private val api = NekoCLIApi()
+
     init {
-        Timer().schedule(getInitialDelay(), 24 * 60 * 60 * 1000) {
+        val timer = Timer()
+        timer.scheduleAtFixedRate(getInitialDelay(), 24 * 60 * 60 * 1000) {
             sendFactOfTheDay()
         }
     }
@@ -31,6 +33,7 @@ class FactOfTheDay(private val jda: JDA) : ListenerAdapter() {
         target.set(Calendar.HOUR_OF_DAY, 0)
         target.set(Calendar.MINUTE, 0)
         target.set(Calendar.SECOND, 0)
+        target.set(Calendar.MILLISECOND, 0)
         if (now.after(target)) {
             target.add(Calendar.DAY_OF_MONTH, 1)
         }
@@ -45,11 +48,13 @@ class FactOfTheDay(private val jda: JDA) : ListenerAdapter() {
         val guildIcon = channel.guild.iconUrl ?: ""
         val timestamp = Instant.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm"))
         val embed = EmbedBuilder()
-            .setTitle("💡 Daily Tech Fact")
+            .setTitle("🌟 Fact of the Day")
             .setDescription(fact)
             .setImage(api.getConfig("SERVERIMAGE"))
-            .setFooter("Shared on $timestamp", guildIcon)
+            .setFooter("Brought to you by ${channel.guild.name} • $timestamp", guildIcon)
             .setThumbnail(guildIcon)
+            .addField("🌐 Source", "Geek Jokes API", true)
+            .addField("🕒 Shared at", "00:00 UTC", true)
             .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
             .build()
 

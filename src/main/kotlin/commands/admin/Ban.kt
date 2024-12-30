@@ -1093,11 +1093,11 @@ class Ban : ListenerAdapter() {
                 event.hook.editOriginalEmbeds(
                     EmbedBuilder()
                         .setTitle("✅ Success")
-                        .setDescription("Successfully banned ${target.user.asTag}.")
+                        .setDescription("Successfully banned ${target.user.name}.")
                         .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
                         .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                         .addField("Reason", reason, false)
-                        .addField("Banned By", event.user.asTag, true)
+                        .addField("Banned By", event.user.name, true)
                         .addField("Timestamp", timestamp, true)
                         .addField("Message", randomPhrase, false)
                         .setTimestamp(event.timeCreated)
@@ -1107,15 +1107,15 @@ class Ban : ListenerAdapter() {
                 AnsiConsole.systemInstall()
                 println(
                     ansi().fgBrightBlue().a("[").reset().a("NekoCLIWorker").fgBrightBlue().a("]").reset()
-                        .fgBrightGreen().a(" Successfully banned ${target.user.asTag} ").reset()
-                        .a("By: ${event.user.asTag}").reset()
+                        .fgBrightBlue().a(" Successfully banned ${target.user.name} ").reset()
+                        .a("By: ${event.user.name}").reset()
                         .a(" | Reason: $reason | Timestamp: $timestamp | Message: $randomPhrase")
                 )
             }) { error ->
                 event.hook.editOriginalEmbeds(
                     EmbedBuilder()
                         .setTitle("❌ Error")
-                        .setDescription("An error occurred while banning ${target.user.asTag}.")
+                        .setDescription("An error occurred while banning ${target.user.name}.")
                         .setColor(Color.RED)
                         .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                         .setTimestamp(event.timeCreated)

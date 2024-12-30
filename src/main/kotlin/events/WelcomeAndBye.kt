@@ -7,6 +7,8 @@ import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.utils.FileUpload
+import org.fusesource.jansi.Ansi
+import org.fusesource.jansi.AnsiConsole
 import utils.NekoCLIApi
 import java.awt.*
 import java.awt.geom.Ellipse2D
@@ -18,8 +20,31 @@ import javax.imageio.ImageIO
 class WelcomeAndBye : ListenerAdapter() {
     private val api = NekoCLIApi()
     private val welcomeChannelId = api.getConfig("WELCOMECHANNELID")
+    private val unverifiedRoleId = api.getConfig("UNVERIFIEDROLEID")
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
         val member = event.member ?: return
+        val guild = event.guild
+        val unverifiedRole = guild.getRoleById(unverifiedRoleId)
+        if (unverifiedRole != null) {
+            guild.addRoleToMember(member, unverifiedRole).queue {
+                AnsiConsole.systemInstall()
+                println(
+                    Ansi.ansi()
+                        .fgBrightBlue().a("[Success] ")
+                        .reset().a("UnVerified role successfully assigned to ")
+                        .fgBrightBlue().a(member.user.name)
+                        .reset()
+                )
+            }
+        } else {
+            AnsiConsole.systemInstall()
+            println(
+                Ansi.ansi()
+                    .fgBrightRed().a("[Error] ")
+                    .reset().a("Unverified role not found!")
+                    .reset()
+            )
+        }
         val welcomeImage = generateWelcomeImage(member, "Welcome to the server!")
         val welcomeChannel = event.guild.getTextChannelById(welcomeChannelId)
         welcomeChannel?.sendMessage("Welcome ${member.asMention} to the server!")
@@ -31,7 +56,7 @@ class WelcomeAndBye : ListenerAdapter() {
         val goodbyeImage = generateWelcomeImage(member, "Goodbye! We'll miss you!")
         val welcomeChannel = event.guild.getTextChannelById(welcomeChannelId)
 
-        welcomeChannel?.sendMessage("Goodbye ${member.user.asTag}! We hope to see you again!")
+        welcomeChannel?.sendMessage("Goodbye ${member.user.name}! We hope to see you again!")
             ?.addFiles(FileUpload.fromData(goodbyeImage, "goodbye.png"))
             ?.queue()
     }

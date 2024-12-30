@@ -71,7 +71,7 @@ class Announce : ListenerAdapter() {
                 .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
                 .setAuthor("Neko-CLI Worker", api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                 .setTimestamp(event.timeCreated)
-                .setFooter("Announcement sent by ${event.user.asTag}", event.user.effectiveAvatarUrl)
+                .setFooter("Announcement sent by ${event.user.name}", event.user.effectiveAvatarUrl)
 
             if (!imageUrl.isNullOrBlank()) {
                 embedBuilder.setImage(imageUrl)

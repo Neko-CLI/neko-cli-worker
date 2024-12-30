@@ -47,7 +47,11 @@ class Suggest : ListenerAdapter() {
 
         val suggestionChannel = event.jda.getTextChannelById(api.getConfig("SUGGESTIONSCHANNELID"))
         if (suggestionChannel == null) {
-            event.reply("❌ Suggestion channel not found. Please contact an administrator.").setEphemeral(true).queue()
+            if (event.isFromGuild) {
+                event.reply("❌ Suggestion channel not found in this server. Please contact an administrator.").setEphemeral(true).queue()
+            } else {
+                event.reply("❌ Suggestion channel is not accessible in direct messages. Please contact an administrator.").setEphemeral(true).queue()
+            }
             return
         }
 
@@ -55,7 +59,7 @@ class Suggest : ListenerAdapter() {
         val embed = EmbedBuilder()
             .setTitle("💡 New Suggestion! 📝")
             .setDescription("🔍 **Suggestion Details:**\n$suggestion")
-            .addField("👤 Suggested by", event.user.asTag, false)
+            .addField("👤 Suggested by", event.user.name, false)
             .setFooter("📅 Submitted on $timestamp", event.user.effectiveAvatarUrl)
             .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
             .build()

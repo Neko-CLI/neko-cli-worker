@@ -47,7 +47,11 @@ class BugReport : ListenerAdapter() {
 
         val bugReportChannel = event.jda.getTextChannelById(api.getConfig("BUGREPORTSCHANNELID"))
         if (bugReportChannel == null) {
-            event.reply("❌ Bug report channel not found. Please contact an administrator.").setEphemeral(true).queue()
+            if (event.isFromGuild) {
+                event.reply("❌ Bug report channel not found in this server. Please contact an administrator.").setEphemeral(true).queue()
+            } else {
+                event.reply("❌ Bug report channel is not accessible in direct messages. Please contact an administrator.").setEphemeral(true).queue()
+            }
             return
         }
 
@@ -55,9 +59,9 @@ class BugReport : ListenerAdapter() {
         val embed = EmbedBuilder()
             .setTitle("🐞 New Bug Report! ⚠️")
             .setDescription("🔍 **Bug Details:**\n$bugDescription")
-            .addField("👤 Reported by", event.user.asTag, false)
+            .addField("👤 Reported by", event.user.name, false)
             .setFooter("📅 Reported on $timestamp", event.user.effectiveAvatarUrl)
-            .setColor(Color.RED)
+            .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
             .build()
 
         bugReportChannel.sendMessageEmbeds(embed).queue {

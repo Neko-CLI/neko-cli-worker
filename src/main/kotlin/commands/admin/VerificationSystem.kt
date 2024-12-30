@@ -139,7 +139,7 @@ class VerificationSystem : ListenerAdapter() {
             verificationCodes.remove(userId)
             event.replyEmbeds(
                 EmbedBuilder()
-                    .setTitle("✅ Verification Successful")
+                    .setTitle("✅ **Verification Successful**")
                     .setDescription("You have been successfully verified and granted access to the server.")
                     .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
                     .build()
@@ -148,21 +148,43 @@ class VerificationSystem : ListenerAdapter() {
                 .queue()
 
             val guild = event.guild
-            val verifiedRole = guild?.getRoleById(api.getConfig("VERIFICATIONROLEID"))
-            val unverifiedRole = guild?.getRoleById(api.getConfig("UNVERIFIEDROLEID"))
-            val member = guild?.getMember(event.user)
-
-            if (verifiedRole != null && member != null) {
-                guild.addRoleToMember(member, verifiedRole).queue()
+            if (guild == null) {
+                println("[Error] Guild is null. Ensure the interaction occurs in a server context.")
+                return
             }
 
-            if (unverifiedRole != null && member != null) {
-                guild.removeRoleFromMember(member, unverifiedRole).queue()
+            val member = guild.retrieveMember(event.user).complete()
+            if (member == null) {
+                println("[Error] Member is null. Ensure the user is part of the server.")
+                return
+            }
+
+            val verifiedRole = guild.getRoleById(api.getConfig("VERIFICATIONROLEID"))
+            val unverifiedRole = guild.getRoleById(api.getConfig("UNVERIFIEDROLEID"))
+
+            if (verifiedRole != null) {
+                guild.addRoleToMember(member, verifiedRole).queue({
+                    println("[Info] Successfully added role '${verifiedRole.name}' to user '${member.user.name}'.")
+                }, {
+                    println("[Error] Failed to add role '${verifiedRole.name}' to user '${member.user.name}': ${it.message}")
+                })
+            } else {
+                println("[Error] Verified role not found. Ensure the ID is correct in the configuration.")
+            }
+
+            if (unverifiedRole != null) {
+                guild.removeRoleFromMember(member, unverifiedRole).queue({
+                    println("[Info] Successfully removed role '${unverifiedRole.name}' from user '${member.user.name}'.")
+                }, {
+                    println("[Error] Failed to remove role '${unverifiedRole.name}' from user '${member.user.name}': ${it.message}")
+                })
+            } else {
+                println("[Error] Unverified role not found. Ensure the ID is correct in the configuration.")
             }
         } else {
             event.replyEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Verification Failed")
+                    .setTitle("❌ **Verification Failed**")
                     .setDescription("The code you entered is incorrect. Please try again.")
                     .setColor(Color.RED)
                     .build()
@@ -171,6 +193,8 @@ class VerificationSystem : ListenerAdapter() {
                 .queue()
         }
     }
+
+
 
     private fun generateVerificationCode(): String {
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

@@ -26,7 +26,7 @@ class Status : ListenerAdapter() {
         runBlocking {
             val nekoCliNpmStatus = checkStatus("https://registry.npmjs.org/neko-cli", "NPM")
             val nekoCliYarnStatus = checkStatus("https://yarnpkg.com/package/neko-cli", "Yarn")
-            val nekoWebsiteStatus = checkWebsiteStatus("https://neko-cli.unstackss.dev/")
+            val nekoWebsiteStatus = checkWebsiteStatus("https://neko-cli.com")
             val botStatus = checkBotStatus(event)
 
             val embed = EmbedBuilder()

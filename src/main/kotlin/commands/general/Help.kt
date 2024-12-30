@@ -77,10 +77,12 @@ class Help : ListenerAdapter() {
                             .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
                             .build()
 
-                        "admin" -> EmbedBuilder()
-                            .setTitle("Admin Commands 🛠️")
-                            .setDescription(
-                                """```yml
+                        "admin" -> {
+                            if (event.member?.hasPermission(net.dv8tion.jda.api.Permission.ADMINISTRATOR) == true) {
+                                EmbedBuilder()
+                                    .setTitle("Admin Commands 🛠️")
+                                    .setDescription(
+                                        """```yml
 /clear - Clear messages in the channel
 /ban - Ban a user from the server.
 /pex - Grant a role to a user.
@@ -90,16 +92,28 @@ class Help : ListenerAdapter() {
 /setasktohrmodal - Configure and Enable the Ask to HR Modal for Questions
 /setverificationchannel - Set up the advanced verification system in the current channel
 /setticketforum - Set up a ticket system for users to create private threads for support.
+/userinfo - Fetch detailed information about a user.
+/tempban - Manage temporary bans on the server.
+/kick - Kick a user from the server.
+/timeout - Temporarily timeout a user.
+/warn - Manage user warnings.
 ```"""
-                            )
-                            .setColor(Color.RED)
-                            .build()
+                                    )
+                                    .setColor(Color.RED)
+                                    .build()
+                            } else {
+                                EmbedBuilder()
+                                    .setTitle("Access Denied ❌")
+                                    .setDescription("You do not have permission to view admin commands.")
+                                    .setColor(Color.RED)
+                                    .build()
+                            }
+                        }
 
                         "utility" -> EmbedBuilder()
                             .setTitle("Utility Commands 🔧")
                             .setDescription(
                                 """```yml
-/userinfo - Fetch detailed information about a user.
 /dependencies - Name of the package to search for.
 /snapcode - Generate a stylish code snapshot.
 ```"""

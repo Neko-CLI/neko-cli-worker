@@ -97,7 +97,7 @@ class ModalAskHR : EventListener {
                 .setDescription("A new question has been submitted by ${event.user.asMention}")
                 .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
                 .addField("User Name 📝", name, true)
-                .addField("Discord Tag 🔖", event.user.asTag, true)
+                .addField("Discord Tag 🔖", event.user.name, true)
                 .addField("Contact Email 📧", email, true)
                 .addField("Question ❓", question, false)
                 .addField("Question ID 🔑", questionId, true)
@@ -109,7 +109,7 @@ class ModalAskHR : EventListener {
                 .addActionRow(Button.primary("reply_$questionId", "Reply").withEmoji(Emoji.fromUnicode("✉️")))
                 .queue { message ->
                     questionMappings[questionId] = event.user to message.id
-                    println("Question mapped: questionId=$questionId, user=${event.user.asTag}, messageId=${message.id}")
+                    println("Question mapped: questionId=$questionId, user=${event.user.name}, messageId=${message.id}")
                 }
         }
         event.reply("👍 Thank you for your question! Our HR team will get back to you as soon as possible.")
@@ -151,7 +151,7 @@ class ModalAskHR : EventListener {
             return
         }
 
-        println("Processing reply: questionId=$questionId, user=${user.asTag}, messageId=$messageId")
+        println("Processing reply: questionId=$questionId, user=${user.name}, messageId=$messageId")
 
         user.openPrivateChannel().queue({ channel ->
             val embed = EmbedBuilder()
@@ -159,7 +159,7 @@ class ModalAskHR : EventListener {
                 .setDescription("We have provided a response to your question.")
                 .addField("📌 Question ID", questionId, false)
                 .addField("📝 Response", response, false)
-                .addField("👤 Answered By", event.user.asTag, true)
+                .addField("👤 Answered By", event.user.name, true)
                 .addField("⏰ Answered At", Instant.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm")), true)
                 .setFooter("For more info, visit our website or live chat support.")
                 .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
@@ -168,7 +168,7 @@ class ModalAskHR : EventListener {
 
             channel.sendMessageEmbeds(embed).queue()
         }, {
-            println("Failed to send DM to user: ${user.asTag}")
+            println("Failed to send DM to user: ${user.name}")
             event.reply("❌ Unable to send a private message to the user. They may have DMs disabled.")
                 .setEphemeral(true)
                 .queue()

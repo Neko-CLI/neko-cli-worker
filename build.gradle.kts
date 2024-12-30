@@ -30,6 +30,7 @@ dependencies {
     implementation("org.json:json:20240303") // JSON
     implementation("org.jsoup:jsoup:1.18.3") // JSOUP
     implementation("org.apache.xmlgraphics:batik-all:1.18") // APACHE-BATIK-FULL
+    implementation("org.mongodb:mongodb-driver-sync:4.10.2") // MONGODB-DRIVER-SY
 }
 
 tasks.withType<JavaCompile> {

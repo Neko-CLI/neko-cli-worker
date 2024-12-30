@@ -1,4 +1,6 @@
-package commands.utility
+@file:Suppress("SpellCheckingInspection")
+
+package commands.admin
 
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Member
@@ -59,7 +61,7 @@ class UserInfo : ListenerAdapter() {
             .addField("Account Created", user.timeCreated.toString(), true)
             .addField("Joined Server", user.timeJoined.toString(), true)
             .addField("Roles", user.roles.joinToString { it.name }, false)
-            .addField("Permissions", user.permissions.joinToString { it.getName() }, false)
+            .addField("Permissions", user.permissions.joinToString { it.name }, false)
             .setThumbnail(user.user.avatarUrl)
             .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
             .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)

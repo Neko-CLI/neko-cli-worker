@@ -89,7 +89,7 @@ class Sponsors : ListenerAdapter() {
         val embed = EmbedBuilder()
             .setTitle(sponsor.name)
             .setImage(sponsor.logo)
-            .setDescription("[Visit Website](${sponsor.link})")
+            .setDescription("[Visit ${sponsor.name} WebSite](${sponsor.link})")
             .setColor(Color.decode(if (sponsor.color.startsWith("#")) sponsor.color else "#${sponsor.color}"))
             .build()
 

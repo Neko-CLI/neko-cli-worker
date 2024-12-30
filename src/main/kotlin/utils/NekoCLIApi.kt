@@ -31,6 +31,19 @@ import kotlin.system.exitProcess
 
 class NekoCLIApi {
 
+    private lateinit var jdaInstance: JDA
+
+    fun initializeJda(jda: JDA) {
+        jdaInstance = jda
+    }
+
+    fun getJdaInstance(): JDA {
+        if (!::jdaInstance.isInitialized) {
+            throw IllegalStateException("JDA instance is not initialized!")
+        }
+        return jdaInstance
+    }
+
     fun insertValueInFile(fileName: String, value: String) {
         val file = Path("resources/$fileName")
         if (file.exists()) {
@@ -86,7 +99,7 @@ class NekoCLIApi {
             insertCommentIntoJsonFile("config.json", " - Generic Section - ")
             insertIntoJsonFile("config.json", "GUILDID", "1312749868200099901")
             insertIntoJsonFile("config.json", "LOGCHANNELID", "1322492054408007721")
-            insertIntoJsonFile("config.json", "WEBSITE", "https://neko-cli.unstackss.dev")
+            insertIntoJsonFile("config.json", "WEBSITE", "https://neko-cli.com")
             insertIntoJsonFile("config.json", "WORKERCOLOR", "0x2473f5")
             insertIntoJsonFile("config.json", "PASSWORD", "Hwdcop5625010----------")
             insertIntoJsonFile("config.json", "FTTACCESSID", "1322601930756853921")
@@ -99,17 +112,19 @@ class NekoCLIApi {
             insertIntoJsonFile("config.json", "FACTOFDAYCHANNELID", "1322902342412013619")
             insertIntoJsonFile("config.json", "ANNOUNCEMENTCHANNELID", "1313229419351117844")
             insertIntoJsonFile("config.json", "WELCOMECHANNELID", "1313229418197549076")
-            insertIntoJsonFile("config.json", "DISCORDSERVER", "https://nekods.unstackss.dev/")
+            insertIntoJsonFile("config.json", "DISCORDSERVER", "https://ds.neko-cli.com/")
             insertIntoJsonFile("config.json", "EVERYONEID", "1312749868200099901")
             insertIntoJsonFile("config.json", "VERIFICATIONROLEID", "1313229393795092570")
             insertIntoJsonFile("config.json", "UNVERIFIEDROLEID", "1313521554474270742")
+            insertIntoJsonFile("config.json", "WARN1ROLEID", "1323225682662395977")
+            insertIntoJsonFile("config.json", "WARN2ROLEID", "1323225813864419339")
+            insertIntoJsonFile("config.json", "WARN3ROLEID", "1323225905279139910")
             insertIntoJsonFile("config.json", "SERVERIMAGE", "https://i.imgur.com/CbI1FBJ.png")
-            insertCommentIntoJsonFile("config.json", " - MySQL Section - ")
+            insertCommentIntoJsonFile("config.json", " - MongoDB Section - ")
             insertIntoJsonFile("config.json", "HOST", "localhost")
             insertIntoJsonFile("config.json", "PORT", "3306")
-            insertIntoJsonFile("config.json", "DATABASE", "exampledatabase")
             insertIntoJsonFile("config.json", "USERNAME", "exampleusername")
-            insertIntoJsonFile("config.json", "PASSWORDMYSQL", "examplepassword")
+            insertIntoJsonFile("config.json", "MONGODBPASSWORD", "examplepassword")
         }
     }
 
@@ -180,8 +195,8 @@ class NekoCLIApi {
 
     fun sendHelpButtons(): MutableList<Button> {
         val buttons = mutableListOf<Button>()
-        buttons.add(Button.link("https://neko-cli.unstackss.dev", "Website").withEmoji(Emoji.fromUnicode("🌐")))
-        buttons.add(Button.link("https://nekods.unstackss.dev/", "Discord").withEmoji(Emoji.fromUnicode("📢")))
+        buttons.add(Button.link("https://neko-cli.com", "Website").withEmoji(Emoji.fromUnicode("🌐")))
+        buttons.add(Button.link("https://ds.neko-cli.com/", "Discord").withEmoji(Emoji.fromUnicode("📢")))
         buttons.add(Button.link("https://github.com/Neko-CLI/", "GitHub").withEmoji(Emoji.fromUnicode("🐈‍⬛")))
         return buttons
     }
@@ -195,6 +210,27 @@ class NekoCLIApi {
     fun getUserById(jda: JDA, id: String): User? {
         return jda.getUserById(id)
     }
+
+    internal fun findGuildById(guildId: String): Guild? {
+        return try {
+            val jda = getJdaInstance()
+            jda.getGuildById(guildId)
+        } catch (e: Exception) {
+            println("Error fetching guild with ID $guildId: ${e.message}")
+            null
+        }
+    }
+
+    internal fun findUserById(userId: String): User? {
+        return try {
+            val jda = getJdaInstance()
+            jda.retrieveUserById(userId).complete()
+        } catch (e: Exception) {
+            println("Error fetching user with ID $userId: ${e.message}")
+            null
+        }
+    }
+
 
     fun sendPrivateMessage(nekocli: JDA, user: User, message: String, title: String) {
         user.openPrivateChannel().queue { channel ->
@@ -268,7 +304,7 @@ class NekoCLIApi {
     fun sendEmbedMessageInAnnounceChannel(jda: JDA, channelId: String, title: String, description: String?, authorName: String, authorURL: String, authorIconURL: String?, timestamp: TemporalAccessor){
         val newsChannel = jda.getNewsChannelById(channelId)
         if (newsChannel == null) {
-            println(ansi().fgBrightBlue().a("[").reset().a("NekoCLIWorker").fgBrightBlue().a("]").reset().fgBrightGreen().a(" NewsChannel with ID $channelId not found.").reset())
+            println(ansi().fgBrightBlue().a("[").reset().a("NekoCLIWorker").fgBrightBlue().a("]").reset().fgBrightBlue().a(" NewsChannel with ID $channelId not found.").reset())
             return
         }
         val embed = EmbedBuilder()
