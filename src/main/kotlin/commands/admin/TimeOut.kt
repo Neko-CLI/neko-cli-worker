@@ -8,9 +8,15 @@ import utils.NekoCLIApi
 import java.awt.Color
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class TimeOut : ListenerAdapter() {
     private val api = NekoCLIApi()
+    private val scheduler = Executors.newScheduledThreadPool(1)
+
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         if (event.name != "timeout") return
 
@@ -77,16 +83,58 @@ class TimeOut : ListenerAdapter() {
         }
 
         val timeoutUntil = Instant.now().plus(timeoutDuration)
+            .atZone(ZoneId.systemDefault())
+            .format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm"))
+
         target.timeoutFor(timeoutDuration).reason(reason).queue({
+
             event.replyEmbeds(
                 EmbedBuilder()
                     .setTitle("✅ Success")
-                    .setDescription("Successfully timed out ${target.user.name} for $durationOption.")
+                    .setDescription("Successfully timed out **${target.user.name}** for `$durationOption`.")
                     .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
-                    .addField("Reason", reason, false)
-                    .addField("Timeout Until", timeoutUntil.toString(), true)
+                    .addField("🔎 Reason", reason, false)
+                    .addField("⏰ Timeout Until", timeoutUntil, true)
+                    .setFooter("Action performed by ${event.user.name}", event.user.effectiveAvatarUrl)
+                    .setTimestamp(Instant.now())
                     .build()
             ).queue()
+
+            val embed = EmbedBuilder()
+                .setTitle("⏳ You Have Been Timed Out")
+                .setDescription("You have been timed out in **${guild.name}**.")
+                .setColor(Color.YELLOW)
+                .addField("⏰ Duration", "`$durationOption`", false)
+                .addField("🔎 Reason", reason, false)
+                .addField("🕒 Timeout Until", timeoutUntil, false)
+                .setFooter("Moderator: ${event.user.name}", event.user.effectiveAvatarUrl)
+                .setTimestamp(Instant.now())
+                .build()
+
+            target.user.openPrivateChannel().queue({ channel ->
+                channel.sendMessageEmbeds(embed).queue(
+                    {},
+                    {}
+                )
+            }, {})
+
+            scheduler.schedule({
+                val endEmbed = EmbedBuilder()
+                    .setTitle("⌛ Timeout Expired")
+                    .setDescription("Your timeout in **${guild.name}** has expired. You can now participate in the server again.")
+                    .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
+                    .setFooter("Moderator: ${event.user.name}", event.user.effectiveAvatarUrl)
+                    .setTimestamp(Instant.now())
+                    .build()
+
+                target.user.openPrivateChannel().queue({ channel ->
+                    channel.sendMessageEmbeds(endEmbed).queue(
+                        {},
+                        {}
+                    )
+                }, {})
+            }, timeoutDuration.toSeconds(), TimeUnit.SECONDS)
+
         }, {
             event.replyEmbeds(
                 EmbedBuilder()

@@ -194,8 +194,6 @@ class VerificationSystem : ListenerAdapter() {
         }
     }
 
-
-
     private fun generateVerificationCode(): String {
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         return (1..6)

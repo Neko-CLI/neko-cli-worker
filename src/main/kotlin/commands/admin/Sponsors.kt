@@ -53,29 +53,37 @@ class Sponsors : ListenerAdapter() {
                 if (event.member?.hasPermission(Permission.ADMINISTRATOR) == true) {
                     handleAddSponsor(event)
                 } else {
-                    val embed = EmbedBuilder()
-                        .setTitle("Permission Denied")
-                        .setDescription("❌ You do not have permission to add sponsors.")
-                        .setColor(Color.RED)
-                        .build()
-
-                    event.replyEmbeds(embed).setEphemeral(true).queue()
+                    event.replyEmbeds(
+                        EmbedBuilder()
+                            .setTitle("🔒 **Permission Denied**")
+                            .setDescription("❌ You do not have permission to add sponsors.")
+                            .setColor(Color.RED)
+                            .setFooter("Permission validation failed", event.jda.selfUser.avatarUrl)
+                            .build()
+                    ).setEphemeral(true).queue()
                 }
             }
             "remove" -> {
                 if (event.member?.hasPermission(Permission.ADMINISTRATOR) == true) {
                     handleRemoveSponsor(event)
                 } else {
-                    val embed = EmbedBuilder()
-                        .setTitle("Permission Denied")
-                        .setDescription("❌ You do not have permission to remove sponsors.")
-                        .setColor(Color.RED)
-                        .build()
-
-                    event.replyEmbeds(embed).setEphemeral(true).queue()
+                    event.replyEmbeds(
+                        EmbedBuilder()
+                            .setTitle("🔒 **Permission Denied**")
+                            .setDescription("❌ You do not have permission to remove sponsors.")
+                            .setColor(Color.RED)
+                            .setFooter("Permission validation failed", event.jda.selfUser.avatarUrl)
+                            .build()
+                    ).setEphemeral(true).queue()
                 }
             }
-            else -> event.reply("❌ Unknown subcommand!").setEphemeral(true).queue()
+            else -> event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ **Unknown Subcommand**")
+                    .setDescription("The specified subcommand is not recognized.")
+                    .setColor(Color.RED)
+                    .build()
+            ).setEphemeral(true).queue()
         }
     }
 
@@ -89,8 +97,9 @@ class Sponsors : ListenerAdapter() {
         val embed = EmbedBuilder()
             .setTitle(sponsor.name)
             .setImage(sponsor.logo)
-            .setDescription("[Visit ${sponsor.name} WebSite](${sponsor.link})")
+            .setDescription("[Visit ${sponsor.name} Website](${sponsor.link})")
             .setColor(Color.decode(if (sponsor.color.startsWith("#")) sponsor.color else "#${sponsor.color}"))
+            .setFooter("Sponsor Details", event.jda.selfUser.avatarUrl)
             .build()
 
         event.replyEmbeds(embed).setEphemeral(true).queue()
@@ -98,18 +107,26 @@ class Sponsors : ListenerAdapter() {
 
     private fun handleListSponsors(event: SlashCommandInteractionEvent) {
         val sponsors = fetchSponsors() ?: run {
-            event.reply("❌ Failed to fetch sponsors.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ **Failed to Fetch Sponsors**")
+                    .setDescription("An error occurred while retrieving the list of sponsors.")
+                    .setColor(Color.RED)
+                    .setFooter("Error fetching sponsors", event.jda.selfUser.avatarUrl)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         if (sponsors.isEmpty()) {
-            val embed = EmbedBuilder()
-                .setTitle("No Sponsors Found")
-                .setDescription("It seems there are no sponsors currently available.")
-                .setColor(Color.RED)
-                .build()
-
-            event.replyEmbeds(embed).setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("📋 **No Sponsors Found**")
+                    .setDescription("It seems there are no sponsors currently available.")
+                    .setColor(Color.YELLOW)
+                    .setFooter("Sponsor list empty", event.jda.selfUser.avatarUrl)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
@@ -122,7 +139,7 @@ class Sponsors : ListenerAdapter() {
             }
             .build()
 
-        event.reply("📋 Select a sponsor from the menu below:")
+        event.reply("📋 **Select a sponsor from the menu below:**")
             .setComponents(ActionRow.of(selectMenu))
             .setEphemeral(true)
             .queue()
@@ -137,14 +154,28 @@ class Sponsors : ListenerAdapter() {
         val iconSize = event.getOption("iconsize")?.asInt
 
         if (name == null || logo == null || link == null) {
-            event.reply("❌ Missing arguments for adding a sponsor.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("⚠️ **Missing Arguments**")
+                    .setDescription("❌ Missing required arguments for adding a sponsor.")
+                    .setColor(Color.YELLOW)
+                    .setFooter("Add sponsor error", event.jda.selfUser.avatarUrl)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         val sponsors = fetchSponsors()?.toMutableList() ?: mutableListOf()
 
         if (sponsors.any { it.name.equals(name, ignoreCase = true) }) {
-            event.reply("❌ A sponsor with this name already exists.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("⚠️ **Duplicate Sponsor**")
+                    .setDescription("❌ A sponsor with this name already exists.")
+                    .setColor(Color.YELLOW)
+                    .setFooter("Duplicate sponsor detected", event.jda.selfUser.avatarUrl)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
@@ -152,9 +183,23 @@ class Sponsors : ListenerAdapter() {
 
         if (updateSponsors(sponsors)) {
             cachedSponsors = sponsors
-            event.reply("✅ Sponsor added successfully!").queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("✅ **Sponsor Added Successfully**")
+                    .setDescription("The sponsor **$name** has been added successfully!")
+                    .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
+                    .setFooter("Add sponsor success", event.jda.selfUser.avatarUrl)
+                    .build()
+            ).queue()
         } else {
-            event.reply("❌ Failed to add sponsor.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ **Failed to Add Sponsor**")
+                    .setDescription("An error occurred while adding the sponsor.")
+                    .setColor(Color.RED)
+                    .setFooter("Add sponsor failure", event.jda.selfUser.avatarUrl)
+                    .build()
+            ).setEphemeral(true).queue()
         }
     }
 
@@ -162,22 +207,50 @@ class Sponsors : ListenerAdapter() {
         val name = event.getOption("name")?.asString
 
         if (name == null) {
-            event.reply("❌ Missing sponsor name for removal.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("⚠️ **Missing Arguments**")
+                    .setDescription("❌ Missing sponsor name for removal.")
+                    .setColor(Color.YELLOW)
+                    .setFooter("Remove sponsor error", event.jda.selfUser.avatarUrl)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         val sponsors = fetchSponsors()?.toMutableList() ?: mutableListOf()
 
         if (!sponsors.removeIf { it.name.equals(name, ignoreCase = true) }) {
-            event.reply("❌ Sponsor not found.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("⚠️ **Sponsor Not Found**")
+                    .setDescription("❌ The sponsor **$name** was not found.")
+                    .setColor(Color.YELLOW)
+                    .setFooter("Remove sponsor failure", event.jda.selfUser.avatarUrl)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         if (updateSponsors(sponsors)) {
             cachedSponsors = sponsors
-            event.reply("✅ Sponsor removed successfully!").queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("✅ **Sponsor Removed Successfully**")
+                    .setDescription("The sponsor **$name** has been removed successfully.")
+                    .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
+                    .setFooter("Remove sponsor success", event.jda.selfUser.avatarUrl)
+                    .build()
+            ).queue()
         } else {
-            event.reply("❌ Failed to remove sponsor.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ **Failed to Remove Sponsor**")
+                    .setDescription("An error occurred while removing the sponsor.")
+                    .setColor(Color.RED)
+                    .setFooter("Remove sponsor failure", event.jda.selfUser.avatarUrl)
+                    .build()
+            ).setEphemeral(true).queue()
         }
     }
 

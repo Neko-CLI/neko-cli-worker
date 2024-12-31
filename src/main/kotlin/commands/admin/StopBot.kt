@@ -22,8 +22,11 @@ class StopBot : ListenerAdapter() {
         if (event.guild?.id != api.getConfig("GUILDID")) {
             event.replyEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Error")
-                    .setDescription("You are not in the correct server to use this command.")
+                    .setTitle("🚫 **Access Denied**")
+                    .setDescription(
+                        "❌ You are not in the correct server to use this command.\n\n" +
+                                "🔒 **Tip:** Ensure you are in the authorized server before trying again."
+                    )
                     .setImage(api.getConfig("SERVERIMAGE"))
                     .setColor(Color.RED)
                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
@@ -36,8 +39,11 @@ class StopBot : ListenerAdapter() {
         if (!api.isUnStackss(event.member?.id.toString())) {
             event.replyEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Permission Denied")
-                    .setDescription("You are not authorized to use this command.")
+                    .setTitle("🔒 **Permission Denied**")
+                    .setDescription(
+                        "❌ You are not authorized to use this command.\n\n" +
+                                "🔑 **Required Role:** Only authorized personnel can execute this command."
+                    )
                     .setImage(api.getConfig("SERVERIMAGE"))
                     .setColor(Color.RED)
                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
@@ -50,8 +56,11 @@ class StopBot : ListenerAdapter() {
         if (password != api.getConfig("PASSWORD")) {
             event.replyEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Incorrect Password")
-                    .setDescription("The password provided is incorrect. Please try again.")
+                    .setTitle("🔑 **Incorrect Password**")
+                    .setDescription(
+                        "❌ The password provided is incorrect. Please try again.\n\n" +
+                                "📌 **Tip:** Double-check the password for typos."
+                    )
                     .setImage(api.getConfig("SERVERIMAGE"))
                     .setColor(Color.RED)
                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
@@ -65,13 +74,17 @@ class StopBot : ListenerAdapter() {
 
         val timestamp = Instant.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm"))
         val shuttingDownEmbed = EmbedBuilder()
-            .setTitle("🛑 Shutting Down")
-            .setDescription("The bot is shutting down as per the request of ${event.member?.asMention}.")
+            .setTitle("🛑 **Shutting Down**")
+            .setDescription(
+                "The bot is shutting down as per the request of ${event.member?.asMention}.\n\n" +
+                        "⚠️ **This action will stop all bot activities until restarted.**"
+            )
             .setImage(api.getConfig("SERVERIMAGE"))
             .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
             .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
-            .addField("Requested By", event.member?.asMention ?: "Unknown", true)
-            .addField("Timestamp", timestamp, true)
+            .addField("👤 **Requested By**", event.member?.asMention ?: "Unknown", true)
+            .addField("⏰ **Timestamp**", timestamp, true)
+            .setFooter("Bot Shutdown", event.jda.selfUser.avatarUrl)
             .setTimestamp(Instant.now())
             .build()
 

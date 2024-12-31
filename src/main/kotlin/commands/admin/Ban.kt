@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 package commands.admin
 
 import net.dv8tion.jda.api.EmbedBuilder
@@ -1021,20 +1023,20 @@ class Ban : ListenerAdapter() {
         "Buh-bye!",
         "Buh-bye!",
         "Adios, muchacho!"
-        )
+    )
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         if (event.name != "ban") return
 
+        event.deferReply().queue() // Acknowledge the interaction
+
         val guild = event.guild
         if (guild == null || guild.id != api.getConfig("GUILDID")) {
-            event.replyEmbeds(
+            event.hook.sendMessageEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Access Denied")
-                    .setDescription("You are not in the correct server to use this command.")
+                    .setTitle("\uD83D\uDEAB **Access Denied**")
+                    .setDescription("❌ You are not in the correct server to use this command.")
                     .setColor(Color.RED)
-                    .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
-                    .setTimestamp(event.timeCreated)
                     .build()
             ).setEphemeral(true).queue()
             return
@@ -1042,13 +1044,11 @@ class Ban : ListenerAdapter() {
 
         val member = event.member
         if (member == null || !member.hasPermission(Permission.BAN_MEMBERS)) {
-            event.replyEmbeds(
+            event.hook.sendMessageEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Insufficient Permissions")
-                    .setDescription("You do not have permission to ban members.")
+                    .setTitle("\uD83D\uDD12 **Insufficient Permissions**")
+                    .setDescription("❌ You do not have the required permissions to ban members.")
                     .setColor(Color.RED)
-                    .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
-                    .setTimestamp(event.timeCreated)
                     .build()
             ).setEphemeral(true).queue()
             return
@@ -1056,26 +1056,22 @@ class Ban : ListenerAdapter() {
 
         val target: Member? = event.getOption("user", OptionMapping::getAsMember)
         if (target == null) {
-            event.replyEmbeds(
+            event.hook.sendMessageEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Invalid Target")
-                    .setDescription("You must specify a valid member to ban.")
+                    .setTitle("\uD83D\uDEAB **Invalid Target**")
+                    .setDescription("❌ You must specify a valid member to ban.")
                     .setColor(Color.RED)
-                    .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
-                    .setTimestamp(event.timeCreated)
                     .build()
             ).setEphemeral(true).queue()
             return
         }
 
         if (!member.canInteract(target)) {
-            event.replyEmbeds(
+            event.hook.sendMessageEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Cannot Ban Target")
-                    .setDescription("You cannot ban this user due to role hierarchy or insufficient permissions.")
+                    .setTitle("\uD83D\uDEAB **Cannot Ban Target**")
+                    .setDescription("❌ You cannot ban this user due to role hierarchy or insufficient permissions.")
                     .setColor(Color.RED)
-                    .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
-                    .setTimestamp(event.timeCreated)
                     .build()
             ).setEphemeral(true).queue()
             return
@@ -1085,43 +1081,71 @@ class Ban : ListenerAdapter() {
         val randomPhrase = funnyPhrases[Random.nextInt(funnyPhrases.size)]
         val timestamp = Instant.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm"))
 
-        event.deferReply().queue()
+        // Send private message to the target user
+        target.user.openPrivateChannel().queue({ channel ->
+            val privateEmbed = EmbedBuilder()
+                .setTitle("\uD83D\uDD28 **You Have Been Banned**")
+                .setDescription("You have been banned from **${guild.name}**.")
+                .addField("\uD83D\uDC6E **Banned By**", event.user.name, true)
+                .addField("\uD83D\uDD0E **Reason**", reason, false)
+                .addField("\u23F0 **Timestamp**", timestamp, true)
+                .setColor(Color.RED)
+                .setFooter("Appeals can be made via the support team.", event.jda.selfUser.avatarUrl)
+                .build()
 
+            channel.sendMessageEmbeds(privateEmbed).queue({
+                // Proceed with the ban if the private message is sent successfully
+                executeBan(event, guild, target, reason, randomPhrase, timestamp)
+            }, {
+                // Log the failure to send a private message but proceed with the ban
+                println("[Warning] Unable to send private message to ${target.user.name}.")
+                executeBan(event, guild, target, reason, randomPhrase, timestamp)
+            })
+        }, {
+            // Log the failure to open a private channel but proceed with the ban
+            println("[Warning] Unable to open private channel for ${target.user.name}.")
+            executeBan(event, guild, target, reason, randomPhrase, timestamp)
+        })
+    }
+
+    private fun executeBan(
+        event: SlashCommandInteractionEvent,
+        guild: net.dv8tion.jda.api.entities.Guild,
+        target: Member,
+        reason: String,
+        randomPhrase: String,
+        timestamp: String
+    ) {
         guild.ban(listOf(UserSnowflake.fromId(target.id)), Duration.ZERO)
             .reason(reason)
             .queue({
                 event.hook.editOriginalEmbeds(
                     EmbedBuilder()
-                        .setTitle("✅ Success")
-                        .setDescription("Successfully banned ${target.user.name}.")
+                        .setTitle("\uD83C\uDF89 **Success**")
+                        .setDescription("✅ Successfully banned **${target.user.name}**.")
+                        .addField("\uD83D\uDD0E **Reason**", reason.ifEmpty { "No reason provided" }, false)
+                        .addField("\uD83D\uDC6E **Banned By**", event.user.name, true)
+                        .addField("\u23F0 **Timestamp**", timestamp, true)
+                        .addField("\uD83D\uDCE2 **Message**", randomPhrase, false)
                         .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
-                        .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
-                        .addField("Reason", reason, false)
-                        .addField("Banned By", event.user.name, true)
-                        .addField("Timestamp", timestamp, true)
-                        .addField("Message", randomPhrase, false)
-                        .setTimestamp(event.timeCreated)
                         .build()
                 ).queue()
 
                 AnsiConsole.systemInstall()
                 println(
-                    ansi().fgBrightBlue().a("[").reset().a("NekoCLIWorker").fgBrightBlue().a("]").reset()
-                        .fgBrightBlue().a(" Successfully banned ${target.user.name} ").reset()
-                        .a("By: ${event.user.name}").reset()
-                        .a(" | Reason: $reason | Timestamp: $timestamp | Message: $randomPhrase")
+                    ansi().fgBrightBlue().a("[NekoCLIWorker] ").reset()
+                        .a("Successfully banned ${target.user.name} by ${event.user.name}")
+                        .a(" | Reason: $reason | Timestamp: $timestamp")
                 )
-            }) { error ->
+            }, { error ->
                 event.hook.editOriginalEmbeds(
                     EmbedBuilder()
-                        .setTitle("❌ Error")
-                        .setDescription("An error occurred while banning ${target.user.name}.")
+                        .setTitle("\u26A0\uFE0F **Error**")
+                        .setDescription("❌ Failed to ban **${target.user.name}**.")
                         .setColor(Color.RED)
-                        .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
-                        .setTimestamp(event.timeCreated)
                         .build()
                 ).queue()
                 error.printStackTrace()
-            }
+            })
     }
 }

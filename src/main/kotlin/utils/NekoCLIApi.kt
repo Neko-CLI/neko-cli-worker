@@ -1,27 +1,19 @@
-@file:Suppress("MemberVisibilityCanBePrivate", "unused")
+@file:Suppress("MemberVisibilityCanBePrivate", "SpellCheckingInspection")
 
 package utils
 
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.serialization.Serializable
+import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.*
+import net.dv8tion.jda.api.entities.Activity
+import net.dv8tion.jda.api.entities.UserSnowflake
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import org.fusesource.jansi.Ansi.ansi
-import java.awt.Color
 import java.net.URL
-import java.time.Instant
-import java.time.temporal.TemporalAccessor
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -161,9 +153,6 @@ class NekoCLIApi {
         return match?.groups?.get(1)?.value ?: throw IllegalArgumentException("Config key '$value' not found in config.json")
     }
 
-    @Serializable
-    data class Sponsors(val count: Int)
-
     @OptIn(DelicateCoroutinesApi::class)
     fun autoActivity(nekocli: JDA) {
         Timer().scheduleAtFixedRate(object : TimerTask() {
@@ -193,58 +182,10 @@ class NekoCLIApi {
         }
     }
 
-    fun sendHelpButtons(): MutableList<Button> {
-        val buttons = mutableListOf<Button>()
-        buttons.add(Button.link("https://neko-cli.com", "Website").withEmoji(Emoji.fromUnicode("🌐")))
-        buttons.add(Button.link("https://ds.neko-cli.com/", "Discord").withEmoji(Emoji.fromUnicode("📢")))
-        buttons.add(Button.link("https://github.com/Neko-CLI/", "GitHub").withEmoji(Emoji.fromUnicode("🐈‍⬛")))
-        return buttons
-    }
-
     fun sendQuestionToHR(): MutableList<Button> {
         val buttons = mutableListOf<Button>()
         buttons.add(Button.primary("sqthr", "Ask HR Your Questions").withEmoji(Emoji.fromUnicode("🙋‍♂️")))
         return buttons
-    }
-
-    fun getUserById(jda: JDA, id: String): User? {
-        return jda.getUserById(id)
-    }
-
-    internal fun findGuildById(guildId: String): Guild? {
-        return try {
-            val jda = getJdaInstance()
-            jda.getGuildById(guildId)
-        } catch (e: Exception) {
-            println("Error fetching guild with ID $guildId: ${e.message}")
-            null
-        }
-    }
-
-    internal fun findUserById(userId: String): User? {
-        return try {
-            val jda = getJdaInstance()
-            jda.retrieveUserById(userId).complete()
-        } catch (e: Exception) {
-            println("Error fetching user with ID $userId: ${e.message}")
-            null
-        }
-    }
-
-
-    fun sendPrivateMessage(nekocli: JDA, user: User, message: String, title: String) {
-        user.openPrivateChannel().queue { channel ->
-            channel.sendMessageEmbeds(
-                EmbedBuilder()
-                    .setTitle(title)
-                    .setDescription(message)
-                    .setColor(Color.decode(getConfig("WORKERCOLOR")))
-                    .setAuthor(nekocli.selfUser.name)
-                    .setImage(getConfig("SERVERIMAGE"))
-                    .setTimestamp(Instant.now())
-                    .build()
-            ).queue()
-        }
     }
 
     fun preventLag() {
@@ -267,88 +208,12 @@ class NekoCLIApi {
         return id == "1131965612890005626"
     }
 
-    fun getChannel(jda: JDA, guildId: String, channelId: String): String {
-        val guild = jda.getGuildById(guildId)
-        if (guild == null) {
-            println(ansi().fgBrightRed().a("[Error]").reset().a(" Guild with ID $guildId not found."))
-            return "Guild not found."
-        }
-
-        val textChannel = guild.getTextChannelById(channelId)
-        if (textChannel == null) {
-            println(ansi().fgBrightRed().a("[Error]").reset().a(" TextChannel with ID $channelId not found in guild $guildId."))
-            return "Channel not found."
-        }
-
-        return textChannel.asMention
-    }
-
-
-    fun sendEmbedMessageInChannel(jda: JDA, channelId: String, title: String, description: String?, authorName: String, authorURL: String, authorIconURL: String?, timestamp: TemporalAccessor){
-        jda.getTextChannelById(channelId)!!.sendMessageEmbeds(
-            EmbedBuilder()
-                .setTitle(title)
-                .setDescription(description)
-                .setColor(Color.decode(getConfig("WORKERCOLOR")))
-                .setImage(getConfig("SERVERIMAGE"))
-                .setAuthor(
-                    authorName,
-                    authorURL,
-                    authorIconURL
-                )
-                .setTimestamp(timestamp)
-                .build()
-        ).queue()
-    }
-
-    fun sendEmbedMessageInAnnounceChannel(jda: JDA, channelId: String, title: String, description: String?, authorName: String, authorURL: String, authorIconURL: String?, timestamp: TemporalAccessor){
-        val newsChannel = jda.getNewsChannelById(channelId)
-        if (newsChannel == null) {
-            println(ansi().fgBrightBlue().a("[").reset().a("NekoCLIWorker").fgBrightBlue().a("]").reset().fgBrightBlue().a(" NewsChannel with ID $channelId not found.").reset())
-            return
-        }
-        val embed = EmbedBuilder()
-            .setTitle(title)
-            .setDescription(description)
-            .setColor(Color.decode(getConfig("WORKERCOLOR")))
-            .setAuthor(authorName, authorURL, authorIconURL)
-            .setTimestamp(timestamp)
-            .build()
-        newsChannel.sendMessageEmbeds(embed).queue { message ->
-            message.crosspost().queue()
-        }
-    }
-    fun getTimestamp(): TemporalAccessor {
-        return Date().toInstant()
-    }
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun userToMember(jda: JDA, userId: String): Member {
-        return jda.getGuildById(getConfig("GUILDID"))!!.getMemberById(userId)!!
-    }
-
     fun addRole(jda: JDA, guildId: String, target: UserSnowflake, roleId: String) {
         jda.getGuildById(guildId)!!.addRoleToMember(target, jda.getRoleById(roleId)!!).queue()
     }
 
     fun removeRole(jda: JDA, guildId: String, target: UserSnowflake, roleId: String) {
         jda.getGuildById(guildId)!!.removeRoleFromMember(target, jda.getRoleById(roleId)!!).queue()
-    }
-
-    fun discordInvite(): String {
-        return getConfig("DISCORDSERVER")
-    }
-
-    fun getRoleByName(jda: JDA, guildId: String, roleName: String): Role {
-        return jda.getGuildById(guildId)!!.getRolesByName(roleName, true)[0]
-    }
-
-    fun hasRole(jda: JDA, guildId: String, target: UserSnowflake, roleId: String): Boolean {
-        return jda.getGuildById(guildId)!!.getMemberById(target.id)!!.roles.contains(jda.getRoleById(roleId)!!)
-    }
-
-    fun codeMessage(message: String, language: String): String {
-        return "```${language}\n$message\n```"
     }
 
     fun getAllCommands(jda: JDA): List<Command> {

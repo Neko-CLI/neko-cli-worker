@@ -6,29 +6,75 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
+import utils.NekoCLIApi
+import java.awt.Color
 import java.time.OffsetDateTime
 
 class Clear : ListenerAdapter() {
+    private val api = NekoCLIApi()
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         if (event.name != "clear") return
         if (!event.member?.hasPermission(Permission.ADMINISTRATOR)!!) {
-            event.reply("❌ You do not have permission to use this command.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                net.dv8tion.jda.api.EmbedBuilder()
+                    .setTitle("🚫 **Insufficient Permissions**")
+                    .setDescription("❌ You do not have permission to use this command.\n\n🔑 **Required Permission:** `Administrator`.")
+                    .setColor(Color.RED)
+                    .setFooter("Permission check performed", event.jda.selfUser.avatarUrl)
+                    .setTimestamp(event.timeCreated)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
+
         val amount = event.getOption("amount")?.asInt ?: 0
         if (amount <= 0 || amount > 1000) {
-            event.reply("❌ Please provide a valid number of messages to delete (1-1000).").setEphemeral(true).queue()
+            event.replyEmbeds(
+                net.dv8tion.jda.api.EmbedBuilder()
+                    .setTitle("⚠️ **Invalid Input**")
+                    .setDescription("❌ Please provide a valid number of messages to delete (1-1000).")
+                    .setColor(Color.YELLOW)
+                    .setFooter("Validation error", event.jda.selfUser.avatarUrl)
+                    .setTimestamp(event.timeCreated)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
+
         if (event.channel is GuildMessageChannel) {
             val channelName = event.channel.name
-            event.reply("⏳ Deleting $amount messages... Please wait.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                net.dv8tion.jda.api.EmbedBuilder()
+                    .setTitle("⏳ **Processing Request**")
+                    .setDescription("Deleting **$amount** messages from `#$channelName`. Please wait...")
+                    .setColor(Color.YELLOW)
+                    .setFooter("Message deletion in progress", event.jda.selfUser.avatarUrl)
+                    .setTimestamp(event.timeCreated)
+                    .build()
+            ).setEphemeral(true).queue()
+
             deleteMessagesInBatches(event.channel as GuildMessageChannel, amount) {
-                event.hook.editOriginal("✅ Successfully deleted $amount messages in $channelName!").queue()
+                event.hook.editOriginalEmbeds(
+                    net.dv8tion.jda.api.EmbedBuilder()
+                        .setTitle("✅ **Success**")
+                        .setDescription("Successfully deleted **$amount** messages in `#$channelName`!")
+                        .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
+                        .setFooter("Operation completed", event.jda.selfUser.avatarUrl)
+                        .setTimestamp(OffsetDateTime.now())
+                        .build()
+                ).queue()
             }
         } else {
-            event.reply("❌ This command is not supported in this type of channel.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                net.dv8tion.jda.api.EmbedBuilder()
+                    .setTitle("❌ **Unsupported Channel**")
+                    .setDescription("This command cannot be used in this type of channel. Please use it in a text channel.")
+                    .setColor(Color.RED)
+                    .setFooter("Channel type not supported", event.jda.selfUser.avatarUrl)
+                    .setTimestamp(event.timeCreated)
+                    .build()
+            ).setEphemeral(true).queue()
         }
     }
 

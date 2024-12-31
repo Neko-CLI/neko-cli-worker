@@ -32,33 +32,75 @@ class TempBan(
             "add" -> handleAddTempBan(event)
             "list" -> handleListBans(event)
             "remove" -> handleRemoveBan(event)
-            else -> event.reply("❌ Unknown subcommand!").setEphemeral(true).queue()
+            else -> event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ **Unknown Subcommand**")
+                    .setDescription("The specified subcommand is not recognized.")
+                    .setColor(Color.RED)
+                    .setTimestamp(Instant.now())
+                    .build()
+            ).setEphemeral(true).queue()
         }
     }
 
     private fun handleAddTempBan(event: SlashCommandInteractionEvent) {
         val guild = event.guild ?: run {
-            event.reply("❌ This command must be used in a server.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ **Error**")
+                    .setDescription("This command must be used in a server.")
+                    .setColor(Color.RED)
+                    .setTimestamp(Instant.now())
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         val member = event.member ?: run {
-            event.reply("❌ You do not have permission to use this command.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ **Permission Denied**")
+                    .setDescription("You do not have permission to use this command.")
+                    .setColor(Color.RED)
+                    .setTimestamp(Instant.now())
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         if (!member.hasPermission(Permission.BAN_MEMBERS)) {
-            event.reply("❌ You do not have permission to ban members.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("🔒 **Permission Denied**")
+                    .setDescription("You do not have permission to ban members.")
+                    .setColor(Color.RED)
+                    .setTimestamp(Instant.now())
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         val target = event.getOption("user")?.asUser ?: run {
-            event.reply("❌ You must specify a valid user.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ **Invalid Target**")
+                    .setDescription("You must specify a valid user to ban.")
+                    .setColor(Color.RED)
+                    .setTimestamp(Instant.now())
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         val durationOption = event.getOption("duration")?.asString ?: run {
-            event.reply("❌ You must specify a valid duration.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("⚠️ **Missing Arguments**")
+                    .setDescription("You must specify a valid duration for the ban.")
+                    .setColor(Color.YELLOW)
+                    .setTimestamp(Instant.now())
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
@@ -66,7 +108,14 @@ class TempBan(
 
         val duration = parseDuration(durationOption)
         if (duration == null) {
-            event.reply("❌ Invalid duration format. Use formats like `1h`, `30m`, or `1d`.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("⚠️ **Invalid Duration**")
+                    .setDescription("The duration format is invalid. Use formats like `1h`, `30m`, or `1d`.")
+                    .setColor(Color.YELLOW)
+                    .setTimestamp(Instant.now())
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
@@ -78,68 +127,71 @@ class TempBan(
                 EmbedBuilder()
                     .setTitle("⚠️ **Temporary Ban Notice**")
                     .setDescription(
-                        """
-        You are about to be temporarily banned from **${guild.name}**.
-        
-        **Details:**
-        - **Reason:** $reason
-        - **Duration:** $durationOption
-        - **Unban Time:** `${unbanTime}`
-        - **Banned By:** *${event.user.name}*
-        """.trimIndent()
+                        "You are temporarily banned from **${guild.name}**.\n\n" +
+                                "**Reason:** $reason\n" +
+                                "**Duration:** $durationOption\n" +
+                                "**Unban Time:** ${DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(unbanTime.toInstant().atZone(ZoneId.systemDefault()))}\n" +
+                                "**Banned By:** ${event.user.name}"
                     )
                     .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
                     .setTimestamp(Instant.now())
                     .build()
             ).setActionRow(
                 Button.link(inviteLink, "Rejoin Server")
-            ).queue({
-                guild.ban(listOf(UserSnowflake.fromId(target.id)), Duration.ofSeconds(0)).reason(reason).queue({
-                    val banRecord = Document()
-                        .append("userId", target.id)
-                        .append("guildId", guild.id)
-                        .append("unbanTime", unbanTime)
-                    mongoManager.insertBans(banRecord)
+            ).queue()
 
-                    event.replyEmbeds(
-                        EmbedBuilder()
-                            .setTitle("✅ **User Banned Temporarily**")
-                            .setDescription(
-                                """
-        **Details:**
-        - **User Banned:** ${target.name}
-        - **Duration:** $durationOption
-        - **Reason:** $reason
-        - **Unban Time:** `${unbanTime}`
-        """.trimIndent()
-                            )
-                            .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
-                            .setTimestamp(Instant.now())
-                            .build()
+            guild.ban(listOf(UserSnowflake.fromId(target.id)), Duration.ZERO).reason(reason).queue({
+                val banRecord = Document()
+                    .append("userId", target.id)
+                    .append("guildId", guild.id)
+                    .append("unbanTime", unbanTime)
+                mongoManager.insertBans(banRecord)
 
-                    ).queue()
-                }, {
-                    event.reply("❌ Failed to ban the user. Ensure I have the required permissions.").setEphemeral(true).queue()
-                })
+                event.replyEmbeds(
+                    EmbedBuilder()
+                        .setTitle("✅ **User Banned Temporarily**")
+                        .setDescription(
+                            "**User:** ${target.name}\n" +
+                                    "**Duration:** $durationOption\n" +
+                                    "**Reason:** $reason\n" +
+                                    "**Unban Time:** ${DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(unbanTime.toInstant().atZone(ZoneId.systemDefault()))}"
+                        )
+                        .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
+                        .setTimestamp(Instant.now())
+                        .build()
+                ).queue()
             }, {
-                event.reply("⚠️ Could not send a DM to ${target.asMention}. Proceeding with the ban.").setEphemeral(true).queue()
+                event.reply("❌ Failed to ban the user. Ensure I have the required permissions.").setEphemeral(true).queue()
             })
         }, {
-            event.reply("⚠️ Could not open a private channel with ${target.asMention}. Proceeding with the ban.").setEphemeral(true).queue()
+            event.reply("⚠️ Could not send a DM to ${target.asMention}. Proceeding with the ban.").setEphemeral(true).queue()
         })
     }
 
-
     private fun handleListBans(event: SlashCommandInteractionEvent) {
         val guildId = event.guild?.id ?: run {
-            event.reply("❌ This command must be used in a server.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ **Error**")
+                    .setDescription("This command must be used in a server.")
+                    .setColor(Color.RED)
+                    .setTimestamp(Instant.now())
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         val bans = mongoManager.findBans(Document("guildId", guildId))
 
         if (bans.isEmpty()) {
-            event.reply("✅ No active temporary bans found.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("✅ **No Active Temporary Bans**")
+                    .setDescription("There are no active temporary bans.")
+                    .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
+                    .setTimestamp(Instant.now())
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
@@ -148,34 +200,41 @@ class TempBan(
             val unbanTime = (it["unbanTime"] as Date).toInstant()
                 .atZone(ZoneId.systemDefault())
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-            "User ID: `$userId`, Unban Time: $unbanTime"
+            "User ID: `$userId`, Unban Time: `$unbanTime`"
         }
 
         event.replyEmbeds(
             EmbedBuilder()
                 .setTitle("📜 **Active Temporary Bans**")
-                .setDescription(
-                    """
-        **List of Active Bans:**
-        
-        $banList
-        """.trimIndent()
-                )
+                .setDescription("**List of Active Bans:**\n\n$banList")
                 .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
                 .setTimestamp(Instant.now())
                 .build()
-
         ).setEphemeral(true).queue()
     }
 
     private fun handleRemoveBan(event: SlashCommandInteractionEvent) {
         val guild = event.guild ?: run {
-            event.reply("❌ This command must be used in a server.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ **Error**")
+                    .setDescription("This command must be used in a server.")
+                    .setColor(Color.RED)
+                    .setTimestamp(Instant.now())
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         val userId = event.getOption("user")?.asString ?: run {
-            event.reply("❌ You must specify a valid user ID.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("⚠️ **Missing Arguments**")
+                    .setDescription("You must specify a valid user ID.")
+                    .setColor(Color.YELLOW)
+                    .setTimestamp(Instant.now())
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
@@ -184,7 +243,14 @@ class TempBan(
         ).firstOrNull()
 
         if (banRecord == null) {
-            event.reply("❌ No active ban found for the specified user.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("⚠️ **Ban Not Found**")
+                    .setDescription("No active ban found for the specified user.")
+                    .setColor(Color.YELLOW)
+                    .setTimestamp(Instant.now())
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
@@ -195,16 +261,12 @@ class TempBan(
                 EmbedBuilder()
                     .setTitle("✅ **Ban Removed**")
                     .setDescription(
-                        """
-        The ban for **User ID:** `$userId` has been successfully removed.
-        
-        🎉 The user is now free to rejoin the server if permitted.
-        """.trimIndent()
+                        "The ban for **User ID:** `$userId` has been successfully removed.\n\n" +
+                                "🎉 The user is now free to rejoin the server if permitted."
                     )
                     .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
                     .setTimestamp(Instant.now())
                     .build()
-
             ).queue()
         }, {
             event.reply("❌ Failed to remove the ban.").setEphemeral(true).queue()
@@ -235,7 +297,6 @@ class TempBan(
             }
         }
     }
-
 
     private fun parseDuration(duration: String): Duration? {
         val regex = Regex("(\\d+)([smhd])")

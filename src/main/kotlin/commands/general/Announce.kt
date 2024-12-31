@@ -27,7 +27,9 @@ class Announce : ListenerAdapter() {
                 event.replyEmbeds(
                     EmbedBuilder()
                         .setTitle("❌ Access Denied")
-                        .setDescription("You are not in the correct server to use this command.")
+                        .setDescription(
+                            "You are not in the correct server to use this command. Please ensure you have access to the appropriate server."
+                        )
                         .setColor(Color.RED)
                         .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                         .setTimestamp(event.timeCreated)
@@ -40,7 +42,9 @@ class Announce : ListenerAdapter() {
                 event.replyEmbeds(
                     EmbedBuilder()
                         .setTitle("⚠️ Missing Announcement Content")
-                        .setDescription("Please provide the announcement content.")
+                        .setDescription(
+                            "You need to provide announcement content in the `announce` option. Use the appropriate format for your message."
+                        )
                         .setColor(Color.RED)
                         .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                         .setTimestamp(event.timeCreated)
@@ -56,7 +60,9 @@ class Announce : ListenerAdapter() {
                 event.replyEmbeds(
                     EmbedBuilder()
                         .setTitle("❌ Error")
-                        .setDescription("The announcement channel was not found. Please check the configuration.")
+                        .setDescription(
+                            "The announcement channel could not be found. Please verify the configuration or contact an administrator."
+                        )
                         .setColor(Color.RED)
                         .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                         .setTimestamp(event.timeCreated)
@@ -90,7 +96,7 @@ class Announce : ListenerAdapter() {
                             event.replyEmbeds(
                                 EmbedBuilder()
                                     .setTitle("✅ Announcement Sent")
-                                    .setDescription("The announcement has been successfully sent.")
+                                    .setDescription("The announcement has been successfully delivered to the specified channel.")
                                     .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
                                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                                     .setTimestamp(event.timeCreated)
@@ -100,7 +106,7 @@ class Announce : ListenerAdapter() {
                             event.replyEmbeds(
                                 EmbedBuilder()
                                     .setTitle("❌ Error")
-                                    .setDescription("Failed to send the announcement.")
+                                    .setDescription("Failed to send the announcement with the file attached. Ensure the URL is correct.")
                                     .setColor(Color.RED)
                                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                                     .setTimestamp(event.timeCreated)
@@ -110,8 +116,8 @@ class Announce : ListenerAdapter() {
                 } catch (_: Exception) {
                     event.replyEmbeds(
                         EmbedBuilder()
-                            .setTitle("❌ Error")
-                            .setDescription("Invalid file URL provided.")
+                            .setTitle("❌ Invalid File URL")
+                            .setDescription("The provided file URL could not be processed. Please check the URL and try again.")
                             .setColor(Color.RED)
                             .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                             .setTimestamp(event.timeCreated)
@@ -123,7 +129,7 @@ class Announce : ListenerAdapter() {
                     event.replyEmbeds(
                         EmbedBuilder()
                             .setTitle("✅ Announcement Sent")
-                            .setDescription("The announcement has been successfully sent.")
+                            .setDescription("The announcement has been successfully delivered to the specified channel.")
                             .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
                             .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                             .setTimestamp(event.timeCreated)
@@ -133,7 +139,7 @@ class Announce : ListenerAdapter() {
                     event.replyEmbeds(
                         EmbedBuilder()
                             .setTitle("❌ Error")
-                            .setDescription("Failed to send the announcement.")
+                            .setDescription("Failed to send the announcement. Ensure you have the proper permissions.")
                             .setColor(Color.RED)
                             .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                             .setTimestamp(event.timeCreated)

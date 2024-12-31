@@ -1,25 +1,27 @@
-@file:Suppress("SpellCheckingInspection")
-
-package commands.admin
+package apps
 
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Member
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent
+import net.dv8tion.jda.api.events.interaction.command.UserContextInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
-import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import utils.NekoCLIApi
 import java.awt.Color
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
-class UserInfo : ListenerAdapter() {
+class UserInfoApp : ListenerAdapter() {
 
     private val api = NekoCLIApi()
 
-    override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
-        if (event.name != "userinfo") return
+    override fun onGenericCommandInteraction(event: GenericCommandInteractionEvent) {
+        when (event) {
+            is UserContextInteractionEvent -> handleUserContext(event)
+        }
+    }
 
-        val user: Member? = event.getOption("user", OptionMapping::getAsMember)
+    private fun handleUserContext(event: UserContextInteractionEvent) {
+        val user: Member? = event.targetMember
 
         if (event.guild?.id != api.getConfig("GUILDID")) {
             event.replyEmbeds(
@@ -39,7 +41,7 @@ class UserInfo : ListenerAdapter() {
             event.replyEmbeds(
                 EmbedBuilder()
                     .setTitle("❌ Error: User Not Found")
-                    .setDescription("You must specify a valid user to retrieve information.")
+                    .setDescription("Unable to retrieve the user information.")
                     .setImage(api.getConfig("SERVERIMAGE"))
                     .setColor(Color.RED)
                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
@@ -48,8 +50,6 @@ class UserInfo : ListenerAdapter() {
             ).setEphemeral(true).queue()
             return
         }
-
-        event.deferReply().queue()
 
         val accountCreated = user.timeCreated.format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm"))
         val joinedServer = user.timeJoined.format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm"))
@@ -76,7 +76,7 @@ class UserInfo : ListenerAdapter() {
             .setTimestamp(Instant.now())
             .build()
 
-        event.hook.sendMessageEmbeds(embed).queue()
+        event.replyEmbeds(embed).queue()
     }
 
     private fun truncateContent(content: String): String {

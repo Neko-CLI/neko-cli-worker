@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 package commands.general
 
 import net.dv8tion.jda.api.EmbedBuilder
@@ -20,30 +22,44 @@ class Help : ListenerAdapter() {
                 "help" -> {
                     if (event.guild?.id.equals(api.getConfig("GUILDID"))) {
                         val embed = EmbedBuilder()
-                            .setTitle("Neko-CLI-Worker Help Menu 🐈‍⬛")
-                            .setDescription("Navigate through the available commands using the menu below.")
+                            .setTitle("📖 **Neko-CLI-Worker Help Menu** 🐈‍⬛")
+                            .setDescription(
+                                "Use the menu below to navigate through the available command categories. " +
+                                        "Each section provides detailed descriptions and usage examples."
+                            )
                             .setImage(api.getConfig("SERVERIMAGE"))
                             .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
-                            .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
+                            .setAuthor(
+                                event.jda.selfUser.name,
+                                api.getConfig("WEBSITE"),
+                                event.jda.selfUser.avatarUrl
+                            )
+                            .setFooter("Help requested by ${event.user.name}", event.user.effectiveAvatarUrl)
                             .setTimestamp(event.timeCreated)
                             .build()
 
                         val menu = StringSelectMenu.create("help-menu")
-                            .setPlaceholder("Select a command category...")
-                            .addOption("General Commands", "general", "Basic commands for everyday use.")
-                            .addOption("Admin Commands", "admin", "Commands for server administrators.")
-                            .addOption("Utility Commands", "utility", "Helpful tools and utilities.")
+                            .setPlaceholder("🔍 Select a command category...")
+                            .addOption("🌀 General Commands", "general", "Explore everyday commands.")
+                            .addOption("🔒 Admin Commands", "admin", "Manage server with admin commands.")
+                            .addOption("⚙️ Utility Commands", "utility", "Access helpful tools and utilities.")
                             .build()
 
                         event.replyEmbeds(embed).addActionRow(menu).setEphemeral(true).queue()
                     } else {
                         event.replyEmbeds(
                             EmbedBuilder()
-                                .setTitle("Error ❌")
-                                .setDescription("You are not in the NekoCLI server, so you cannot use this command.")
+                                .setTitle("❌ **Access Denied**")
+                                .setDescription(
+                                    "You are not in the **NekoCLI server**. Access to this command is restricted."
+                                )
                                 .setImage(api.getConfig("SERVERIMAGE"))
                                 .setColor(Color.RED)
-                                .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
+                                .setAuthor(
+                                    event.jda.selfUser.name,
+                                    api.getConfig("WEBSITE"),
+                                    event.jda.selfUser.avatarUrl
+                                )
                                 .setTimestamp(event.timeCreated)
                                 .build()
                         ).setEphemeral(true).queue()
@@ -63,62 +79,68 @@ class Help : ListenerAdapter() {
                 "help-menu" -> {
                     val embed = when (event.values.first()) {
                         "general" -> EmbedBuilder()
-                            .setTitle("General Commands 🍴")
+                            .setTitle("🌀 **General Commands**")
                             .setDescription(
                                 """```yml
-/help - Displays this help menu.
-/status - Check the status of Neko-CLI, its website, and the bot!
-/announce - Create a server-wide announcement.
-/suggest - Submit your suggestion or idea!
-/bugreport - Report a bug or issue you encountered!
-/passgen - Generate your custom secure password with style!
+/help - 📖 Display this help menu.
+/status - 🌐 Check Neko-CLI, website, and bot status.
+/announce - 📢 Create a server-wide announcement.
+/suggest - 💡 Submit a suggestion or idea.
+/bugreport - 🐞 Report a bug or issue.
+/passgen - 🔐 Generate a secure password with style.
 ```"""
                             )
                             .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
+                            .setFooter("Category: General Commands", event.user.effectiveAvatarUrl)
                             .build()
 
                         "admin" -> {
                             if (event.member?.hasPermission(net.dv8tion.jda.api.Permission.ADMINISTRATOR) == true) {
                                 EmbedBuilder()
-                                    .setTitle("Admin Commands 🛠️")
+                                    .setTitle("🔒 **Admin Commands**")
                                     .setDescription(
                                         """```yml
-/clear - Clear messages in the channel
-/ban - Ban a user from the server.
-/pex - Grant a role to a user.
-/depex - Revoke a role from a user.
-/stopbot - Shut down the bot (admin only).
-/sponsors - Manage and showcase your sponsors.
-/setasktohrmodal - Configure and Enable the Ask to HR Modal for Questions
-/setverificationchannel - Set up the advanced verification system in the current channel
-/setticketforum - Set up a ticket system for users to create private threads for support.
-/userinfo - Fetch detailed information about a user.
-/tempban - Manage temporary bans on the server.
-/kick - Kick a user from the server.
-/timeout - Temporarily timeout a user.
-/warn - Manage user warnings.
+/clear - 🗑️ Clear messages in a channel.
+/ban - 🚫 Ban a user from the server.
+/pex - 🛠️ Grant a role to a user.
+/depex - ❌ Revoke a role from a user.
+/stopbot - ⛔ Shut down the bot (admin only).
+/sponsors - 🎉 Manage and showcase sponsors.
+/setasktohrmodal - 💬 Configure the Ask HR Modal.
+/setverificationchannel - 🔑 Set up the verification system.
+/setticketforum - 🎟️ Set up a ticket system for user support.
+/userinfo - 👤 Get detailed user information.
+/tempban - ⏳ Manage temporary bans.
+/kick - 🥾 Kick a user from the server.
+/timeout - ⏱️ Temporarily timeout a user.
+/warn - ⚠️ Manage user warnings.
 ```"""
                                     )
                                     .setColor(Color.RED)
+                                    .setFooter("Category: Admin Commands", event.user.effectiveAvatarUrl)
                                     .build()
                             } else {
                                 EmbedBuilder()
-                                    .setTitle("Access Denied ❌")
-                                    .setDescription("You do not have permission to view admin commands.")
+                                    .setTitle("❌ **Access Denied**")
+                                    .setDescription(
+                                        "You do not have permission to view admin commands. Please contact a server administrator."
+                                    )
                                     .setColor(Color.RED)
+                                    .setFooter("Permission Required", event.user.effectiveAvatarUrl)
                                     .build()
                             }
                         }
 
                         "utility" -> EmbedBuilder()
-                            .setTitle("Utility Commands 🔧")
+                            .setTitle("⚙️ **Utility Commands**")
                             .setDescription(
                                 """```yml
-/dependencies - Name of the package to search for.
-/snapcode - Generate a stylish code snapshot.
+/dependencies - 🔍 Search for a package name.
+/snapcode - ✨ Generate a stylish code snapshot.
 ```"""
                             )
                             .setColor(Color.YELLOW)
+                            .setFooter("Category: Utility Commands", event.user.effectiveAvatarUrl)
                             .build()
 
                         else -> null

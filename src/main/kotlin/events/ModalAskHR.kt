@@ -1,8 +1,9 @@
+@file:Suppress("SpellCheckingInspection")
+
 package events
 
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.User
-import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
@@ -17,7 +18,7 @@ import java.awt.Color
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.UUID
+import java.util.*
 
 class ModalAskHR : EventListener {
 
@@ -96,20 +97,19 @@ class ModalAskHR : EventListener {
                 .setTitle("New HR Question 🏢")
                 .setDescription("A new question has been submitted by ${event.user.asMention}")
                 .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
-                .addField("User Name 📝", name, true)
-                .addField("Discord Tag 🔖", event.user.name, true)
-                .addField("Contact Email 📧", email, true)
-                .addField("Question ❓", question, false)
-                .addField("Question ID 🔑", questionId, true)
-                .addField("Submitted At 🕒", timestamp, false)
+                .addField("📝 User Name", name, true)
+                .addField("🔖 Discord Tag", event.user.name, true)
+                .addField("📧 Contact Email", email, true)
+                .addField("❓ Question", question, false)
+                .addField("🔑 Question ID", questionId, true)
+                .addField("🕒 Submitted At", timestamp, false)
                 .setTimestamp(Instant.now())
                 .build()
 
             hrqChannel.sendMessageEmbeds(embed)
-                .addActionRow(Button.primary("reply_$questionId", "Reply").withEmoji(Emoji.fromUnicode("✉️")))
+                .addActionRow(Button.primary("reply_$questionId", "Reply ✉️"))
                 .queue { message ->
                     questionMappings[questionId] = event.user to message.id
-                    println("Question mapped: questionId=$questionId, user=${event.user.name}, messageId=${message.id}")
                 }
         }
         event.reply("👍 Thank you for your question! Our HR team will get back to you as soon as possible.")
@@ -151,13 +151,11 @@ class ModalAskHR : EventListener {
             return
         }
 
-        println("Processing reply: questionId=$questionId, user=${user.name}, messageId=$messageId")
-
         user.openPrivateChannel().queue({ channel ->
             val embed = EmbedBuilder()
                 .setTitle("Your Question has been Answered! 📨")
                 .setDescription("We have provided a response to your question.")
-                .addField("📌 Question ID", questionId, false)
+                .addField("🔑 Question ID", questionId, false)
                 .addField("📝 Response", response, false)
                 .addField("👤 Answered By", event.user.name, true)
                 .addField("⏰ Answered At", Instant.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm")), true)
@@ -168,7 +166,6 @@ class ModalAskHR : EventListener {
 
             channel.sendMessageEmbeds(embed).queue()
         }, {
-            println("Failed to send DM to user: ${user.name}")
             event.reply("❌ Unable to send a private message to the user. They may have DMs disabled.")
                 .setEphemeral(true)
                 .queue()
@@ -184,11 +181,10 @@ class ModalAskHR : EventListener {
             message.editMessageEmbeds(updatedEmbed)
                 .setComponents(
                     ActionRow.of(
-                        Button.secondary("answered_$questionId", "Answered by ${event.user.name}").asDisabled()
+                        Button.secondary("answered_$questionId", "Answered by ${event.user.name} ✅").asDisabled()
                     )
                 ).queue()
         }, {
-            println("Failed to update the message in HR channel: messageId=$messageId")
             event.reply("❌ Unable to update the original question message.")
                 .setEphemeral(true)
                 .queue()

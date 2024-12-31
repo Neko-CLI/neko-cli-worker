@@ -1,4 +1,4 @@
-@file:Suppress("SameParameterValue", "RegExpRedundantEscape", "SpellCheckingInspection", "Unused")
+@file:Suppress("SameParameterValue", "RegExpRedundantEscape", "SpellCheckingInspection")
 
 package commands.utility
 

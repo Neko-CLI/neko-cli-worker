@@ -1,9 +1,11 @@
-@file:Suppress("unused", "SpellCheckingInspection")
+@file:Suppress("SpellCheckingInspection")
 
+import apps.UserInfoApp
 import commands.admin.*
 import commands.general.*
 import commands.utility.Dependencies
 import commands.utility.SnapCode
+import events.FactOfTheDay
 import events.ModalAskHR
 import events.Ready
 import events.WelcomeAndBye
@@ -19,6 +21,8 @@ import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.utils.ChunkingFilter
 import net.dv8tion.jda.api.utils.MemberCachePolicy
 import net.dv8tion.jda.api.utils.cache.CacheFlag
+import org.fusesource.jansi.Ansi
+import org.fusesource.jansi.AnsiConsole
 import utils.MongoDBManager
 import utils.NekoCLIApi
 
@@ -27,6 +31,8 @@ fun main() {
     api.createResourcesFolder()
     val mongoManager = MongoDBManager()
     mongoManager.connect()
+
+    AnsiConsole.systemInstall()
 
     val jdaBuilder = JDABuilder.createDefault(api.getEnv("TOKEN"))
         .disableCache(
@@ -48,11 +54,13 @@ fun main() {
         .setLargeThreshold(100)
         .setBulkDeleteSplittingEnabled(false)
 
-    println("Building JDA instance...")
+    println(Ansi.ansi().fgBrightBlue().a("[Info]").reset().a(" Building JDA instance...").reset())
     val jda = jdaBuilder.build().awaitReady()
-    println("JDA instance built and ready.")
+    println(Ansi.ansi().fgBrightBlue().a("[Info]").reset().a(" JDA instance built and ready.").reset())
+
     api.initializeJda(jda)
-    println("Adding listeners...")
+    println(Ansi.ansi().fgBrightBlue().a("[Info]").reset().a(" Adding listeners...").reset())
+
     jda.addEventListener(
         Ready(),
         WorkerErrors(),
@@ -65,6 +73,7 @@ fun main() {
         Announce(),
         Help(),
         UserInfo(),
+        UserInfoApp(),
         SetAskToHRModal(),
         Sponsors(),
         VerificationSystem(),
@@ -76,14 +85,15 @@ fun main() {
         BugReport(),
         Dependencies(),
         SnapCode(),
+        FactOfTheDay(api),
         Warn(mongoManager),
         Kick(),
         TimeOut(),
         TempBan(mongoManager, api)
     )
-    println("Listeners added successfully.")
+    println(Ansi.ansi().fgBrightBlue().a("[Info]").reset().a(" Listeners added successfully.").reset())
 
-    println("Registering slash commands...")
+    println(Ansi.ansi().fgBrightBlue().a("[Info]").reset().a(" Registering slash commands...").reset())
     jda.updateCommands().addCommands(
         Commands.slash("ban", "🔨 Ban a user from the server.")
             .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS))
@@ -180,17 +190,17 @@ fun main() {
         Commands.slash("snapcode", "📸 Generate a stylish code snapshot.")
             .setDescription("💾 Paste your code and get a beautifully formatted image snapshot! 🎨")
             .setGuildOnly(false),
-        Commands.slash("tempban", "Manage temporary bans on the server.")
+        Commands.slash("tempban", "⏳ Manage temporary bans on the server.")
             .setGuildOnly(true)
             .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS))
             .addSubcommands(
-                SubcommandData("add", "Temporarily ban a user.")
-                    .addOption(OptionType.USER, "user", "The user to ban.", true)
-                    .addOption(OptionType.STRING, "duration", "Duration of the ban (e.g., 1h, 30m, 1d).", true)
-                    .addOption(OptionType.STRING, "reason", "Reason for the ban.", false),
-                SubcommandData("list", "List all active temporary bans."),
-                SubcommandData("remove", "Remove a temporary ban by user ID.")
-                    .addOption(OptionType.STRING, "user", "The ID of the user to unban.", true)
+                SubcommandData("add", "➕ Temporarily ban a user.")
+                    .addOption(OptionType.USER, "user", "👤 The user to ban.", true)
+                    .addOption(OptionType.STRING, "duration", "⏰ Duration of the ban (e.g., 1h, 30m, 1d).", true)
+                    .addOption(OptionType.STRING, "reason", "✍️ Reason for the ban.", false),
+                SubcommandData("list", "📋 List all active temporary bans."),
+                SubcommandData("remove", "❌ Remove a temporary ban by user ID.")
+                    .addOption(OptionType.STRING, "user", "🆔 The ID of the user to unban.", true)
             ),
         Commands.slash("kick", "👢 Kick a user from the server.")
             .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.KICK_MEMBERS))
@@ -215,6 +225,9 @@ fun main() {
                     .addOption(OptionType.USER, "user", "👤 The user to check warnings for.", true),
                 SubcommandData("remove", "🗑️ Remove the most recent warning from a user.")
                     .addOption(OptionType.USER, "user", "👤 The user to remove a warning from.", true)
-            )).queue()
-    println("Slash commands registered successfully.")
+            ),
+        Commands.user("User Info")
+            .setGuildOnly(true)
+        ).queue()
+    println(Ansi.ansi().fgBrightBlue().a("[Info]").reset().a(" Slash commands registered successfully.").reset())
 }

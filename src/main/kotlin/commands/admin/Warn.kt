@@ -32,22 +32,46 @@ class Warn(
 
     private fun handleAddWarn(event: SlashCommandInteractionEvent) {
         val guild = event.guild ?: run {
-            event.reply("❌ This command must be used in a server.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ Command Error")
+                    .setDescription("This command must be used in a **server** context.")
+                    .setColor(Color.RED)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         val member = event.member ?: run {
-            event.reply("❌ You do not have permission to use this command.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ Permission Denied")
+                    .setDescription("You do not have permission to use this command.")
+                    .setColor(Color.RED)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         if (!member.hasPermission(Permission.MANAGE_ROLES, Permission.ADMINISTRATOR)) {
-            event.reply("❌ You do not have permission to use this command.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ Permission Denied")
+                    .setDescription("You lack the required permissions to use this command.")
+                    .setColor(Color.RED)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         val target = event.getOption("user")?.asMember ?: run {
-            event.reply("❌ You must specify a valid user.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ Invalid Target")
+                    .setDescription("You must specify a valid **user** to warn.")
+                    .setColor(Color.RED)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
@@ -59,7 +83,13 @@ class Warn(
         )
 
         if (warnRoleIds.any { it == null || it.isBlank() }) {
-            event.reply("❌ Warn roles are not configured properly.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ Configuration Error")
+                    .setDescription("Warn roles are not configured properly. Please contact an administrator.")
+                    .setColor(Color.RED)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
@@ -108,7 +138,13 @@ class Warn(
 
         val warnRoleId = warnRoleIds[nextWarnLevel]
         val warnRole = guild.getRoleById(warnRoleId) ?: run {
-            event.reply("❌ Could not find warn role for level ${nextWarnLevel + 1}.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ Missing Role")
+                    .setDescription("Could not find warn role for level ${nextWarnLevel + 1}.")
+                    .setColor(Color.RED)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
@@ -121,17 +157,18 @@ class Warn(
                 .append("warnLevel", nextWarnLevel + 1)
                 .append("expiresAt", expireAt)
             mongoManager.insertWarning(warnRecord)
+
             val userEmbed = EmbedBuilder()
                 .setTitle("⚠️ **You Have Been Warned**")
                 .setDescription(
                     """
         You have received a warning in the server **${guild.name}**.
-        
+
         **Details:**
         - **Reason:** `$reason`
         - **Warn Level:** `${nextWarnLevel + 1}/3`
         - **Expires At:** `${expireAt}`
-        
+
         ⚠️ **Important:** 
         If you reach **3 warnings**, you will be **permanently banned** from the server.
         """.trimIndent()
@@ -151,7 +188,7 @@ class Warn(
                     .setDescription(
                         """
         The user ${target.asMention} has been **warned**.
-        
+
         **Details:**
         - **Reason:** `$reason`
         - **Warn Level:** `${nextWarnLevel + 1}/3`
@@ -168,12 +205,24 @@ class Warn(
 
     private fun handleWarnInfo(event: SlashCommandInteractionEvent) {
         val guild = event.guild ?: run {
-            event.reply("❌ This command must be used in a server.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ Command Error")
+                    .setDescription("This command must be used in a **server** context.")
+                    .setColor(Color.RED)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         val target = event.getOption("user")?.asMember ?: run {
-            event.reply("❌ You must specify a valid user.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ Invalid Target")
+                    .setDescription("You must specify a valid **user** to view warnings.")
+                    .setColor(Color.RED)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
@@ -182,14 +231,20 @@ class Warn(
         )
 
         if (currentWarns.isEmpty()) {
-            event.reply("✅ ${target.asMention} has no active warnings.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("✅ No Active Warnings")
+                    .setDescription("${target.asMention} has no active warnings.")
+                    .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         val warnInfo = currentWarns.joinToString(separator = "\n") {
             val expiresAt = it.getDate("expiresAt")
             val warnLevel = it.getInteger("warnLevel")
-            "Level: $warnLevel | Expires: $expiresAt"
+            "- **Level:** `$warnLevel` | **Expires:** `$expiresAt`"
         }
 
         event.replyEmbeds(
@@ -209,12 +264,24 @@ class Warn(
 
     private fun handleRemoveWarn(event: SlashCommandInteractionEvent) {
         val guild = event.guild ?: run {
-            event.reply("❌ This command must be used in a server.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ Command Error")
+                    .setDescription("This command must be used in a **server** context.")
+                    .setColor(Color.RED)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
         val target = event.getOption("user")?.asMember ?: run {
-            event.reply("❌ You must specify a valid user.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("❌ Invalid Target")
+                    .setDescription("You must specify a valid **user** to remove warnings.")
+                    .setColor(Color.RED)
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 
@@ -223,7 +290,13 @@ class Warn(
         )
 
         if (currentWarns.isEmpty()) {
-            event.reply("❌ ${target.asMention} has no active warnings.").setEphemeral(true).queue()
+            event.replyEmbeds(
+                EmbedBuilder()
+                    .setTitle("✅ No Active Warnings")
+                    .setDescription("${target.asMention} has no active warnings.")
+                    .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
+                    .build()
+            ).setEphemeral(true).queue()
             return
         }
 

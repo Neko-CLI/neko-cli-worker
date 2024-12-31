@@ -1,4 +1,4 @@
-@file:Suppress("SpellCheckingInspection")
+@file:Suppress("SpellCheckingInspection", "SENSELESS_COMPARISON")
 
 package events
 
@@ -26,43 +26,66 @@ class Ready : EventListener {
             val startTime = Instant.now()
             api.autoActivity(event.jda)
             api.preventLag()
+
             val commands = try {
                 api.getAllCommands(event.jda)
             } catch (e: Exception) {
-                println("[Error] Failed to retrieve commands: ${e.message}")
+                AnsiConsole.systemInstall()
+                println(ansi().fgBrightRed().a("[Error]").reset().a(" Failed to retrieve commands: ${e.message}"))
                 emptyList()
             }
 
-            val commandNames = commands.joinToString(", ") { it.name }
+            val commandNames = commands.map { it.name }
             val endTime = Instant.now()
             val startupTime = Duration.between(startTime, endTime).toMillis()
+
             AnsiConsole.systemInstall()
-            println("${ansi().fgBrightBlue()}[Startup Complete]${ansi().reset()} Startup Time: ${startupTime}ms")
-            println("${ansi().fgBrightBlue()}[Startup Complete]${ansi().reset()} Logged In As: ${event.jda.selfUser.name}")
-            println("${ansi().fgBrightBlue()}[Startup Complete]${ansi().reset()} Registered Commands: ${if (commandNames.isEmpty()) "No commands registered" else commandNames}")
+            println(ansi().fgBrightBlue().a("\n[Startup Complete] Commands Registered:\n").reset())
+
+            val tableHeader = "| Command Name       | Description                 |"
+            val tableDivider = "|--------------------|-----------------------------|"
+            println(ansi().fgCyan().a(tableHeader).reset())
+            println(ansi().fgCyan().a(tableDivider).reset())
+
+            commands.forEach {
+                val name = it.name.padEnd(18, ' ')
+                val description = it.description.padEnd(29, ' ')
+                println(ansi().fgBrightGreen().a("| $name | $description |").reset())
+            }
+
+            println(ansi().fgCyan().a(tableDivider).reset())
+            println(ansi().fgBrightBlue().a("\n[Startup Complete] Startup Time: ${startupTime}ms").reset())
+            println(ansi().fgBrightBlue().a("[Startup Complete] Logged In As: ${event.jda.selfUser.name}").reset())
+
             val embed = EmbedBuilder()
-                .setTitle("Bot Online")
-                .setDescription("The bot is now online and ready to operate.")
+                .setTitle("🤖 Bot Status: Online")
+                .setDescription("The bot is now online and fully operational.")
                 .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
-                .addField("Startup Time", "${startupTime}ms", false)
-                .addField("Logged In As", event.jda.selfUser.name, false)
-                .addField("Registered Commands", commandNames.ifEmpty { "No commands registered" }, false)
-                .addField("Status", "Online and set to Do Not Disturb", false)
-                .setFooter("Neko-CLI-Worker", event.jda.selfUser.avatarUrl)
+                .addField("⏱️ **Startup Time**", "`${startupTime}ms`", false)
+                .addField("👤 **Logged In As**", "`${event.jda.selfUser.name}`", false)
+                .addField("🛠️ **Registered Commands**", commandNames.joinToString(", ") { "`$it`" }.ifEmpty { "No commands registered" }, false)
+                .addField("🔔 **Status**", "`Online (Do Not Disturb)`", false)
+                .setFooter("Neko-CLI-Worker | Ready", event.jda.selfUser.avatarUrl)
                 .setTimestamp(Instant.now())
                 .build()
 
             val logChannelId = api.getConfig("LOGCHANNELID")
+            if (logChannelId == null) {
+                println(ansi().fgBrightRed().a("[Critical Error] Log channel ID is null!").reset())
+                return
+            }
+
             val logChannel = event.jda.getTextChannelById(logChannelId)
 
             if (logChannel != null) {
+                println(ansi().fgBrightGreen().a("[Success] Log channel found. Sending embed...").reset())
                 logChannel.sendMessageEmbeds(embed).queue()
             } else {
-                println("[Warning] Log channel not found for ID: $logChannelId")
+                println(ansi().fgYellow().a("[Warning] Log channel not found for ID: $logChannelId").reset())
             }
 
         } catch (e: Exception) {
-            println("[Critical Error] Exception in Ready listener: ${e.message}")
+            println(ansi().fgBrightRed().a("[Critical Error] Exception in Ready listener: ${e.message}").reset())
             e.printStackTrace()
         }
     }

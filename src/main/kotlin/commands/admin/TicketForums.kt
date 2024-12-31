@@ -179,5 +179,4 @@ class TicketForums(
                 .queue()
         })
     }
-
 }

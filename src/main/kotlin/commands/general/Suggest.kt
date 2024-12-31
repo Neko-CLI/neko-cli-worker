@@ -1,4 +1,4 @@
-@file:Suppress("SpellCheckingInspection")
+@file:Suppress("SpellCheckingInspection", "USELESS_ELVIS")
 
 package commands.general
 
@@ -41,31 +41,38 @@ class Suggest : ListenerAdapter() {
         val suggestion = event.getValue("suggestion_detail")?.asString
 
         if (suggestion.isNullOrBlank()) {
-            event.reply("❌ Your suggestion cannot be empty. Please provide some details.").setEphemeral(true).queue()
+            event.reply("❌ **Your suggestion cannot be empty. Please provide some details.**")
+                .setEphemeral(true)
+                .queue()
             return
         }
 
         val suggestionChannel = event.jda.getTextChannelById(api.getConfig("SUGGESTIONSCHANNELID"))
         if (suggestionChannel == null) {
-            if (event.isFromGuild) {
-                event.reply("❌ Suggestion channel not found in this server. Please contact an administrator.").setEphemeral(true).queue()
+            val errorMessage = if (event.isFromGuild) {
+                "❌ **Suggestion channel not found in this server. Please contact an administrator.**"
             } else {
-                event.reply("❌ Suggestion channel is not accessible in direct messages. Please contact an administrator.").setEphemeral(true).queue()
+                "❌ **Suggestion channel is not accessible in direct messages. Please contact an administrator.**"
             }
+            event.reply(errorMessage).setEphemeral(true).queue()
             return
         }
 
         val timestamp = Instant.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm"))
         val embed = EmbedBuilder()
-            .setTitle("💡 New Suggestion! 📝")
-            .setDescription("🔍 **Suggestion Details:**\n$suggestion")
-            .addField("👤 Suggested by", event.user.name, false)
-            .setFooter("📅 Submitted on $timestamp", event.user.effectiveAvatarUrl)
+            .setTitle("💡 **New Suggestion!** 📝")
+            .setDescription(
+                "🔍 **Suggestion Details:**\n\n```$suggestion```"
+            )
+            .addField("👤 **Suggested by**", "${event.user.asTag} \\`${event.user.id}\\`", false)
+            .addField("📅 **Submitted on**", timestamp, false)
+            .setThumbnail(event.user.effectiveAvatarUrl ?: event.jda.selfUser.effectiveAvatarUrl)
             .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
+            .setFooter("Thank you for your valuable feedback!", event.jda.selfUser.effectiveAvatarUrl)
             .build()
 
         suggestionChannel.sendMessageEmbeds(embed).queue {
-            event.reply("✅ **Thank you!** Your suggestion has been submitted successfully. 🎉")
+            event.reply("✅ **Thank you! Your suggestion has been submitted successfully.** 🎉")
                 .setEphemeral(true)
                 .queue()
         }

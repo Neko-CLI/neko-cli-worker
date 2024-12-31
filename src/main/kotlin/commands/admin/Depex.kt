@@ -28,8 +28,11 @@ class Depex : ListenerAdapter() {
         if (event.guild?.id != api.getConfig("GUILDID")) {
             event.replyEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Error")
-                    .setDescription("You are not in the correct server to use this command.")
+                    .setTitle("❌ **Access Denied**")
+                    .setDescription(
+                        "You are not in the correct server to use this command.\n\n" +
+                                "📌 **Tip:** Ensure you are using this command in the authorized server."
+                    )
                     .setColor(Color.RED)
                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                     .setTimestamp(Instant.now())
@@ -41,8 +44,11 @@ class Depex : ListenerAdapter() {
         if (!api.isUnStackss(event.member?.id.toString())) {
             event.replyEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Permission Denied")
-                    .setDescription("You do not have the required permissions to use this command.")
+                    .setTitle("🔒 **Permission Denied**")
+                    .setDescription(
+                        "You do not have the required permissions to use this command.\n\n" +
+                                "🔑 **Required Role:** Ensure you are listed in the authorized personnel."
+                    )
                     .setColor(Color.RED)
                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                     .setTimestamp(Instant.now())
@@ -54,9 +60,12 @@ class Depex : ListenerAdapter() {
         if (user == null || role == null) {
             event.replyEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Missing Arguments")
-                    .setDescription("You must specify both a user and a role.")
-                    .setColor(Color.RED)
+                    .setTitle("⚠️ **Missing Arguments**")
+                    .setDescription(
+                        "You must specify both a **user** and a **role** to execute this command.\n\n" +
+                                "📌 **Usage:** `/depex user:<@User> role:<@Role> password:<Password>`"
+                    )
+                    .setColor(Color.YELLOW)
                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                     .setTimestamp(Instant.now())
                     .build()
@@ -67,8 +76,11 @@ class Depex : ListenerAdapter() {
         if (!event.member!!.canInteract(user)) {
             event.replyEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Interaction Denied")
-                    .setDescription("You cannot interact with this user due to role hierarchy.")
+                    .setTitle("🔒 **Interaction Denied**")
+                    .setDescription(
+                        "You cannot interact with this user due to **role hierarchy restrictions**.\n\n" +
+                                "🔒 **Tip:** Ensure your role is higher than the target user's role."
+                    )
                     .setColor(Color.RED)
                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                     .setTimestamp(Instant.now())
@@ -80,8 +92,11 @@ class Depex : ListenerAdapter() {
         if (password != api.getConfig("PASSWORD")) {
             event.replyEmbeds(
                 EmbedBuilder()
-                    .setTitle("❌ Incorrect Password")
-                    .setDescription("The password you provided is incorrect.")
+                    .setTitle("🔑 **Incorrect Password**")
+                    .setDescription(
+                        "The password you provided is incorrect.\n\n" +
+                                "📌 **Tip:** Double-check the password and try again."
+                    )
                     .setColor(Color.RED)
                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
                     .setTimestamp(Instant.now())
@@ -99,26 +114,30 @@ class Depex : ListenerAdapter() {
 
             event.hook.editOriginalEmbeds(
                 EmbedBuilder()
-                    .setTitle("✅ Permission Revoked")
-                    .setDescription("The role ${role.name} has been removed from ${user.asMention} by ${event.member!!.asMention}.")
+                    .setTitle("✅ **Permission Revoked**")
+                    .setDescription(
+                        "The role **${role.name}** has been successfully removed from ${user.asMention} by ${event.member!!.asMention}."
+                    )
                     .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
-                    .addField("User", user.asMention, true)
-                    .addField("Role", role.name, true)
-                    .addField("Timestamp", timestamp, false)
+                    .addField("👤 **User**", user.asMention, true)
+                    .addField("🛡️ **Role Removed**", role.name, true)
+                    .addField("⏰ **Timestamp**", timestamp, false)
                     .setTimestamp(Instant.now())
                     .build()
             ).queue()
         } else {
             event.hook.editOriginalEmbeds(
                 EmbedBuilder()
-                    .setTitle("⚠️ Role Not Found")
-                    .setDescription("The user ${user.asMention} did not have the role ${role.name}.")
+                    .setTitle("⚠️ **Role Not Found**")
+                    .setDescription(
+                        "The user ${user.asMention} does not have the role **${role.name}**."
+                    )
                     .setColor(Color.YELLOW)
                     .setAuthor(event.jda.selfUser.name, api.getConfig("WEBSITE"), event.jda.selfUser.avatarUrl)
-                    .addField("User", user.asMention, true)
-                    .addField("Role", role.name, true)
-                    .addField("Timestamp", timestamp, false)
+                    .addField("👤 **User**", user.asMention, true)
+                    .addField("🛡️ **Role**", role.name, true)
+                    .addField("⏰ **Timestamp**", timestamp, false)
                     .setTimestamp(Instant.now())
                     .build()
             ).queue()

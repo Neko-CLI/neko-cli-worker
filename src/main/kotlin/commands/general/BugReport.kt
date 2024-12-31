@@ -22,13 +22,13 @@ class BugReport : ListenerAdapter() {
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         if (event.name != "bugreport") return
 
-        val bugDescriptionInput = TextInput.create("bug_description", "🐞 Bug Description", TextInputStyle.PARAGRAPH)
-            .setPlaceholder("📝 Describe the bug you encountered...")
+        val bugDescriptionInput = TextInput.create("bug_description", "\uD83D\uDC1E Bug Description", TextInputStyle.PARAGRAPH)
+            .setPlaceholder("\uD83D\uDCDD Describe the bug you encountered...")
             .setRequired(true)
             .setMaxLength(1000)
             .build()
 
-        val modal = Modal.create("bugreport_modal", "🚨 Report a Bug")
+        val modal = Modal.create("bugreport_modal", "\uD83D\uDEA8 Report a Bug")
             .addActionRow(bugDescriptionInput)
             .build()
 
@@ -57,15 +57,15 @@ class BugReport : ListenerAdapter() {
 
         val timestamp = Instant.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm"))
         val embed = EmbedBuilder()
-            .setTitle("🐞 New Bug Report! ⚠️")
-            .setDescription("🔍 **Bug Details:**\n$bugDescription")
-            .addField("👤 Reported by", event.user.name, false)
-            .setFooter("📅 Reported on $timestamp", event.user.effectiveAvatarUrl)
+            .setTitle("\uD83D\uDC1E New Bug Report! ⚠️")
+            .setDescription("\uD83D\uDD0D **Bug Details:**\n$bugDescription")
+            .addField("\uD83D\uDC64 Reported by", event.user.name, false)
+            .setFooter("\uD83D\uDCC5 Reported on $timestamp", event.user.effectiveAvatarUrl)
             .setColor(Color.decode(api.getConfig("WORKERCOLOR")))
             .build()
 
         bugReportChannel.sendMessageEmbeds(embed).queue {
-            event.reply("✅ **Thank you!** Your bug report has been submitted successfully. 🛠️")
+            event.reply("✅ **Thank you!** Your bug report has been submitted successfully. \uD83D\uDDA0️")
                 .setEphemeral(true)
                 .queue()
         }
