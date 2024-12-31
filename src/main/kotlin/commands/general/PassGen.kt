@@ -20,7 +20,7 @@ class PassGen : ListenerAdapter() {
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         if (event.name != "passgen") return
 
-        event.deferReply(true).queue() // Defer the reply to acknowledge interaction immediately
+        event.deferReply(true).queue()
 
         val maxChar = event.getOption("maxchar")?.asInt ?: 12
         val includeUppercase = event.getOption("uppercase")?.asBoolean ?: true

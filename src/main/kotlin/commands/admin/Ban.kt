@@ -1028,7 +1028,7 @@ class Ban : ListenerAdapter() {
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         if (event.name != "ban") return
 
-        event.deferReply().queue() // Acknowledge the interaction
+        event.deferReply().queue()
 
         val guild = event.guild
         if (guild == null || guild.id != api.getConfig("GUILDID")) {
@@ -1081,7 +1081,6 @@ class Ban : ListenerAdapter() {
         val randomPhrase = funnyPhrases[Random.nextInt(funnyPhrases.size)]
         val timestamp = Instant.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm"))
 
-        // Send private message to the target user
         target.user.openPrivateChannel().queue({ channel ->
             val privateEmbed = EmbedBuilder()
                 .setTitle("\uD83D\uDD28 **You Have Been Banned**")
@@ -1094,15 +1093,12 @@ class Ban : ListenerAdapter() {
                 .build()
 
             channel.sendMessageEmbeds(privateEmbed).queue({
-                // Proceed with the ban if the private message is sent successfully
                 executeBan(event, guild, target, reason, randomPhrase, timestamp)
             }, {
-                // Log the failure to send a private message but proceed with the ban
                 println("[Warning] Unable to send private message to ${target.user.name}.")
                 executeBan(event, guild, target, reason, randomPhrase, timestamp)
             })
         }, {
-            // Log the failure to open a private channel but proceed with the ban
             println("[Warning] Unable to open private channel for ${target.user.name}.")
             executeBan(event, guild, target, reason, randomPhrase, timestamp)
         })

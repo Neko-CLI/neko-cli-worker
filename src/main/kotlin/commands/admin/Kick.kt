@@ -81,7 +81,6 @@ class Kick : ListenerAdapter() {
             return
         }
 
-        // Notify the user before kicking
         target.user.openPrivateChannel().queue({ channel ->
             channel.sendMessageEmbeds(
                 EmbedBuilder()
